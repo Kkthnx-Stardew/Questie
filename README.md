@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.5). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.6). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -12,16 +12,16 @@ This is a beta (0.9.0-beta.5). It works and has been tested in the game, but it 
 
 | Marker | Meaning |
 | --- | --- |
-| An exclamation mark | Someone to hand something in to. For a delivery it only shows while you carry enough of the item, and the item is shown beside it. It also marks the person to go back to once a kill, fishing or gathering quest is done, and the person of a lost item quest once you have found it. |
+| An exclamation mark | Someone to hand something in to. For a delivery it only shows while you carry enough of the item, and the item is shown beside it. It also marks the person to go back to once a kill, fishing or gathering quest is done, and the person of a lost item quest once you have found it. A special order that asks you to deliver items marks its person the same way, once you carry a stack big enough. |
 | A speech bubble | A villager a meeting quest such as Introductions still needs you to greet. |
-| A skull | A monster a kill quest asks for. The slime quest marks every slime, jelly and sludge, as the game counts them. |
+| A skull | A monster a kill quest or a special order asks for. The slime quest marks every slime, jelly and sludge, as the game counts them. |
 
 **Notes in the journal.** Lines are added to the end of a quest's description, so nothing the game says is replaced.
 
 - The villager's portrait or the item's own picture in front of each name, so who and what is easy to see at a glance.
-- Progress such as "Caught 1 of 3", "Slain 2 of 5" or "Greeted 2 of 28", and how many you carry of what a delivery or gathering quest needs, with how many more lie in your chests and fridge, such as "You carry 0 Stone, have 50 in chests, and need 25."
+- How many you carry of what a delivery or gathering quest needs, with how many more lie in your chests and fridge, such as "You carry 0 Stone, have 50 in chests, and need 25." The game already counts kills, catches, pickups and greetings in the quest's own objective line, so Questie does not say those twice.
 - For a fishing quest, where the fish bites, which seasons it bites in, at what times of day and in what weather, and whether it can be caught right now, or that it is out of season. The seasons come from the rules of each place, the ones the game catches fish by, so a fish that only bites in winter says so and one that can be caught year round on Ginger Island is not called out of season. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
-- For a delivery or gathering quest, which shops sell the item and for how much.
+- For a delivery or gathering quest, which shops sell the item and for how much, worked out the way the shop works it out, so an item with no fixed price shows its real one. Festival stalls are left out.
 - For the story quests that ask you to bring something, such as the largemouth bass for Jodi's fish casserole or the chocolate cake for Haley's cake-walk, how many you carry, where to take it, how to catch or cook it and where it is sold.
 - For a building quest, who builds it and what it costs. For the quests about reaching a level in the mines or the Skull Cavern, how deep you have been.
 - For an item quest, how to make the item and whether you know the recipe. When you know it, each ingredient shows how many you carry, such as "Egg (2 of 1)". When you do not, it says how to learn it, such as at 3 hearts with Emily or at Foraging level 6.
@@ -36,13 +36,15 @@ This is a beta (0.9.0-beta.5). It works and has been tested in the game, but it 
 
 ![An item picture in front of its name, and the count in chests](docs/images/log-chests.png)
 
-**Marks on items.** An item a quest wants gets the game's own quest exclamation mark in the top left corner of its slot, in your backpack, in chests and on the toolbar, the way the quality star sits in the bottom left. Hover over it and the tooltip says which quest wants it and what to do. A delivery item is marked until you hand it in. A fish or a resource is marked until you have caught or gathered enough.
+**Marks on items.** An item a quest or a special order wants gets the game's own quest exclamation mark in the top left corner of its slot, in your backpack, in chests and on the toolbar, the way the quality star sits in the bottom left. Hover over it and the tooltip says which quest wants it and what to do. A delivery item is marked until you hand it in. A fish or a resource is marked until you have caught or gathered enough. An item that fits a special order that asks for items you hand over, donate or ship is marked too, and its tooltip says what to do with it.
 
 ![Quest items marked in the backpack, with the tooltip](docs/images/item-marks.png)
 
 **Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out. Each line that asks for one item has that item's picture in front of it. The list stays clear of the box and your backpack, and says how many lines more there are when the screen has no room for all of them.
 
 ![A donation box with the order's list and the items' pictures](docs/images/donation-box.png)
+
+**Special orders.** The journal page of a special order that asks for items says how many you carry that fit, and where to take them, which person for a delivery, which place the donation box stands in, or the shipping bin. An order with several objectives names each one. A delivery order tells you the items have to be handed over together in one stack, which is how the game takes them. Orders that ask for items by tag, such as any vegetable, are matched with the game's own rule.
 
 **A warning on the last day.** When a timed quest, such as a Help Wanted request, is on its last day, a message tells you as the day starts.
 
@@ -103,7 +105,7 @@ Tried in the game with Stardew Valley Expanded 1.15.11, Ridgeside Village 2.5.17
 
 - It is tested on Stardew Valley 1.6.15 with SMAPI 4.5.2, alone and with one host and one joining player on one computer. Three or more players, split screen and play over the internet are untested.
 - The notes are in English. The translation file is `i18n/default.json`, and other languages can be added the usual way.
-- Special orders are not quests in the game's code. Their donation boxes get the list above, but their items are not marked in the backpack and they have no markers or notes in the journal.
+- Special orders are not quests in the game's code. Questie covers the objectives that ask you to deliver, donate or ship items and to kill monsters. Objectives that count what you pick up, catch or reach, such as collecting, fishing and mine floors, are left to the game's own progress bars. A kill order marks its monsters on your farm too, although the game does not count those.
 - Fish seasons come from the game's location list. A fish that a mod limits to a season in some other way may be listed for more seasons than it bites in.
 - Quest kinds from other mods that are not one of the game's own are left alone.
 

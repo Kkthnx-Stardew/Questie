@@ -2,6 +2,12 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.6 (2026-11-08)
+
+- Special orders. An item that fits an order that asks you to deliver, donate or ship items now gets the quest mark in the backpack, in chests and on the toolbar, and its tooltip says which order wants it and what to do with it. Orders ask for items by tag, such as any vegetable, so the game's own rule decides which items fit. The journal page of such an order says how many you carry that fit and where to take them, the person for a delivery, the place of the donation box, or the shipping bin, and that a delivery has to be handed over in one stack. The person a delivery order is for gets the hand-in marker while you carry a stack big enough, and the monsters of a kill order get the skull.
+- Shop prices are worked out the way the shop works them out, with the default price of the item, the profit margin and the price modifiers, so an item with no fixed price, such as seeds, shows what it really costs. Before, only a price written in the shop's data was shown.
+- The journal no longer says "Slain 2 of 5", "Caught 1 of 3", "Collected 4 of 10" or "Greeted 2 of 28" under the game's own line that already says it.
+
 ## 0.9.0-beta.5 (2026-11-08)
 
 - "Where to buy" no longer lists festival stalls, which are open for a day and showed up as names such as "Festival Night Market Magic Boat Day1". A shop that always stocks the item is named before one that only stocks it at times.

@@ -1,4 +1,6 @@
 using StardewValley;
+using StardewValley.GameData.Shops;
+using StardewValley.Internal;
 
 namespace Questie
 {
@@ -7,21 +9,62 @@ namespace Questie
     {
         private static readonly IReadOnlyList<ShopOffer> None = Array.Empty<ShopOffer>();
 
+        /// <summary>One shop's entry for an item, kept until a price is asked for.</summary>
+        private readonly record struct Stock(string Seller, bool Sometimes, ShopData Shop, ShopItemData Entry);
+
         /// <summary>The shops for each item, by qualified id. Built the first time it is needed.</summary>
-        private Dictionary<string, List<ShopOffer>>? _byItem;
+        private Dictionary<string, List<Stock>>? _byItem;
+
+        /// <summary>The offers of the items asked about so far, with their prices worked out.</summary>
+        private readonly Dictionary<string, IReadOnlyList<ShopOffer>> _offers = new(StringComparer.Ordinal);
 
         /// <summary>Forgets the index. Called when the shop data or the language changes.</summary>
-        public void Reset() => _byItem = null;
+        public void Reset()
+        {
+            _byItem = null;
+            _offers.Clear();
+        }
 
         public IReadOnlyList<ShopOffer> Find(string qualifiedItemId)
         {
             _byItem ??= Build();
-            return _byItem.TryGetValue(qualifiedItemId, out var offers) ? offers : None;
+            if (_offers.TryGetValue(qualifiedItemId, out var known))
+                return known;
+            if (!_byItem.TryGetValue(qualifiedItemId, out var stock))
+                return None;
+
+            // a shop that always stocks the item is named before one that only does at times
+            var offers = stock.OrderBy(s => s.Sometimes).Select(s => new ShopOffer(s.Seller, PriceOf(s, qualifiedItemId), s.Sometimes)).ToList();
+            _offers[qualifiedItemId] = offers;
+            return offers;
         }
 
-        private static Dictionary<string, List<ShopOffer>> Build()
+        /// <summary>
+        /// The price the shop asks, worked out the way the game works it out when it stocks the shop, with the item's own price or the
+        /// default one, the profit margin and the price modifiers. 0 when it cannot be worked out.
+        /// </summary>
+        private static int PriceOf(Stock stock, string qualifiedItemId)
         {
-            var index = new Dictionary<string, List<ShopOffer>>(StringComparer.Ordinal);
+            try
+            {
+                var item = ItemRegistry.Create(qualifiedItemId);
+                float price = ShopBuilder.GetBasePrice(new ItemQueryResult(item), stock.Shop, stock.Entry, item, false, stock.Entry.UseObjectDataPrice);
+                var random = Utility.CreateDaySaveRandom();
+                if (!stock.Entry.IgnoreShopPriceModifiers)
+                    price = Utility.ApplyQuantityModifiers(price, stock.Shop.PriceModifiers, stock.Shop.PriceModifierMode, null, null, item, null, random);
+                price = Utility.ApplyQuantityModifiers(price, stock.Entry.PriceModifiers, stock.Entry.PriceModifierMode, null, null, item, null, random);
+                return Math.Max(0, (int)price);
+            }
+            catch (Exception)
+            {
+                // an item or a modifier from another mod that cannot be priced is listed without a price, which is true
+                return 0;
+            }
+        }
+
+        private static Dictionary<string, List<Stock>> Build()
+        {
+            var index = new Dictionary<string, List<Stock>>(StringComparer.Ordinal);
             foreach (var (shopId, shop) in DataLoader.Shops(Game1.content))
             {
                 // only shops that take gold, and only items listed by id (a list can also hold item queries)
@@ -41,21 +84,17 @@ namespace Questie
                     if (qualified is null || !ItemRegistry.Exists(qualified))
                         continue;
 
-                    if (!index.TryGetValue(qualified, out var offers))
-                        index[qualified] = offers = new List<ShopOffer>();
-                    if (offers.All(o => o.Seller != seller))
-                        offers.Add(new ShopOffer(seller, item.Price > 0 ? item.Price : 0, !string.IsNullOrWhiteSpace(item.Condition)));
+                    if (!index.TryGetValue(qualified, out var stock))
+                        index[qualified] = stock = new List<Stock>();
+                    if (stock.All(o => o.Seller != seller))
+                        stock.Add(new Stock(seller, !string.IsNullOrWhiteSpace(item.Condition), shop, item));
                 }
             }
-
-            // a shop that always stocks the item is named before one that only does at times
-            foreach (var key in index.Keys.ToList())
-                index[key] = index[key].OrderBy(o => o.Sometimes).ToList();
             return index;
         }
 
         /// <summary>The person who runs the shop, or the shop's id when it has no named owner.</summary>
-        private static string Seller(string shopId, StardewValley.GameData.Shops.ShopData shop)
+        private static string Seller(string shopId, ShopData shop)
         {
             if (shop.Owners is not null)
             {

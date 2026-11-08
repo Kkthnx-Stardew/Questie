@@ -31,6 +31,7 @@
     <Compile Include="..\Questie\IconText.cs" Link="IconText.cs" />
     <Compile Include="..\Questie\StoryQuests.cs" Link="StoryQuests.cs" />
     <Compile Include="..\Questie\NameText.cs" Link="NameText.cs" />
+    <Compile Include="..\Questie\OrderWant.cs" Link="OrderWant.cs" />
   </ItemGroup>
 
 </Project>

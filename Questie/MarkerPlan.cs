@@ -55,7 +55,8 @@ namespace Questie
 
         /// <summary>Replaces the plan with the one the given quests and settings ask for.</summary>
         /// <param name="carried">How many of an item (a qualified id) the farmer carries.</param>
-        public void Rebuild(IReadOnlyList<QuestFact> facts, ModConfig config, Func<string, int> carried)
+        /// <param name="orders">The open objectives of the special orders, if any.</param>
+        public void Rebuild(IReadOnlyList<QuestFact> facts, ModConfig config, Func<string, int> carried, IReadOnlyList<OrderWant>? orders = null)
         {
             _npcs.Clear();
             _monsters.Clear();
@@ -104,6 +105,25 @@ namespace Questie
                                 Add(name, MarkKind.Greet);
                         }
                         break;
+                }
+            }
+
+            if (orders is null)
+                return;
+            foreach (var want in orders)
+            {
+                if (want.Kind == OrderWantKind.Deliver)
+                {
+                    if (config.MarkDeliveries && (!config.OnlyWhenCarried || want.CanHandOver))
+                        Add(want.Npc, MarkKind.HandIn, want.HeldItemId);
+                }
+                else if (want.Kind == OrderWantKind.Slay && config.MarkMonsters)
+                {
+                    foreach (var kind in want.Monsters)
+                    {
+                        if (!_monsters.Contains(kind))
+                            _monsters.Add(kind);
+                    }
                 }
             }
         }

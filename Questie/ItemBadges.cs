@@ -63,37 +63,40 @@ namespace Questie
             }
         }
 
-        private static bool Active(out HashSet<string> wanted)
+        private static bool Active(out QuestTracker tracker)
         {
-            wanted = null!;
+            tracker = null!;
             if (_config is null || _tracker is null || !Context.IsWorldReady || !_config().ShowItemMarks)
                 return false;
-            wanted = _tracker().WantedItems;
-            return wanted.Count > 0;
+            tracker = _tracker();
+            return tracker.WantedItems.Count > 0 || tracker.HasOrderItems;
         }
+
+        /// <summary>Whether a quest or a special order asks for the item.</summary>
+        private static bool Wanted(QuestTracker tracker, Item item) => tracker.WantedItems.Contains(item.QualifiedItemId) || (tracker.HasOrderItems && tracker.OrderWants(item));
 
         private static void InventoryDrawn(InventoryMenu __instance, SpriteBatch b)
         {
-            if (!Active(out var wanted))
+            if (!Active(out var tracker))
                 return;
             var items = __instance.actualInventory;
             var slots = __instance.inventory;
             for (var i = 0; i < slots.Count && i < items.Count; i++)
             {
-                if (items[i] is { } item && wanted.Contains(item.QualifiedItemId))
+                if (items[i] is { } item && Wanted(tracker, item))
                     DrawIcon(b, slots[i].bounds, 1f);
             }
         }
 
         private static void ToolbarDrawn(Toolbar __instance, SpriteBatch b)
         {
-            if (Game1.activeClickableMenu is not null || !Active(out var wanted))
+            if (Game1.activeClickableMenu is not null || !Active(out var tracker))
                 return;
             var items = Game1.player.Items;
             var buttons = __instance.buttons;
             for (var i = 0; i < buttons.Count && i < items.Count; i++)
             {
-                if (items[i] is { } item && wanted.Contains(item.QualifiedItemId))
+                if (items[i] is { } item && Wanted(tracker, item))
                     DrawIcon(b, buttons[i].bounds, __instance.transparency);
             }
         }
@@ -110,17 +113,25 @@ namespace Questie
         /// <summary>Adds the quest lines to the end of an item's tooltip text. The game hands the same builder to the call that draws it, so it is checked first.</summary>
         private static void AddNote(StringBuilder text, Item hoveredItem)
         {
-            if (hoveredItem is null || !Active(out var wanted) || !wanted.Contains(hoveredItem.QualifiedItemId))
+            if (hoveredItem is null || !Active(out var tracker) || !Wanted(tracker, hoveredItem))
                 return;
 
             try
             {
-                var id = hoveredItem.QualifiedItemId;
+                // an order asks by tag, and tags such as the quality can differ between two stacks of one item
+                var id = hoveredItem.QualifiedItemId + "|" + hoveredItem.Quality;
                 if (id != _noteItem || Game1.ticks - _noteTick >= RefreshTicks || Game1.ticks < _noteTick)
                 {
                     _noteItem = id;
                     _noteTick = Game1.ticks;
-                    var lines = ItemNeeds.Notes(id, _tracker!().Facts, _source!, _source!);
+                    var lines = ItemNeeds.Notes(hoveredItem.QualifiedItemId, tracker.Facts, _source!, _source!).ToList();
+                    foreach (var order in tracker.OrdersFor(hoveredItem))
+                    {
+                        if (lines.Count >= ItemNeeds.MaxQuests)
+                            break;
+                        if (OrderNotes.Tooltip(order, _source!, _source!) is { } line)
+                            lines.Add(line);
+                    }
                     _note = lines.Count == 0 ? "" : string.Join("\n", lines.Select(line => Game1.parseText(IconText.Strip(line), Game1.smallFont, TooltipWidth).TrimEnd()));
                 }
                 if (_note.Length == 0)

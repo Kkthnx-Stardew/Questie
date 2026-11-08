@@ -35,6 +35,7 @@ namespace Questie
             QuestHints.Apply(Monitor, () => _config, _source);
             _donations = new DonationPanel(_source);
             ItemBadges.Apply(Monitor, () => _config, () => _tracker.Value, _source);
+            OrderJournal.Apply(Monitor, () => _config, () => _tracker.Value, _source);
 
             helper.Events.GameLoop.GameLaunched += (_, _) => ConfigMenu.Setup(this, helper, () => _config, OnConfigSaved);
             helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
@@ -189,6 +190,7 @@ namespace Questie
             _chests.Reset();
             _donations.Reset();
             QuestHints.Forget();
+            OrderJournal.Forget();
         }
 
         /// <summary>The text printed by the questie_report command.</summary>
@@ -211,6 +213,8 @@ namespace Questie
                 var notes = shown.Length > quest.questDescription.Length ? shown[quest.questDescription.Length..].Trim().Replace("\n", " | ") : "(none)";
                 lines.Add($"  notes for quest {quest.id.Value} '{quest.questTitle}': {notes}");
             }
+            foreach (var want in tracker.Orders)
+                lines.Add($"  order {want.OrderKey} {want.Kind} npc={want.Npc ?? "-"} place={want.Place ?? "-"} monsters=[{string.Join(", ", want.Monsters)}] {want.Have}/{want.Need} carried={want.Carried} biggest={want.LargestStack} item={want.HeldItemId ?? "-"}");
             lines.Add("Marked people: " + (tracker.Plan.HasNpcs ? string.Join(", ", tracker.Plan.Npcs.Select(n => $"{n} ({tracker.Plan.NpcMark(n)})")) : "none"));
             lines.Add("Marked monsters: " + (tracker.Plan.HasMonsters ? string.Join(", ", tracker.Plan.Monsters) : "none"));
             return string.Join(Environment.NewLine, lines);

@@ -73,13 +73,13 @@ public class HintBuilderTests
     }
 
     [Fact]
-    public void ASlayQuestShowsProgressThenTheReturnLineWhenDone()
+    public void ASlayQuestSaysNothingOfTheCountBecauseTheGameShowsItThenTheReturnLineWhenDone()
     {
         var open = Build(new QuestFact("2", FactKind.Slay, "Lewis", null, "Slime", 2, 5, None));
-        Assert.Equal(new[] { "hint.slain(done=2,total=5)" }, open);
+        Assert.Empty(open);
 
         var done = Build(new QuestFact("2", FactKind.Slay, "Lewis", null, "Slime", 5, 5, None), new Source { Place = "Town" });
-        Assert.Equal(new[] { "hint.slain(done=5,total=5)", "hint.return(npc=LEWIS)", "hint.where(npc=LEWIS,place=Town)" }, done);
+        Assert.Equal(new[] { "hint.return(npc=LEWIS)", "hint.where(npc=LEWIS,place=Town)" }, done);
         Assert.DoesNotContain(open, line => line.StartsWith("hint.where"));
     }
 
@@ -94,7 +94,7 @@ public class HintBuilderTests
     {
         var fish = new FishInfo(new[] { "Beach", "Ocean" }, false, "6am to 7pm", "rainy");
         var lines = Build(new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 1, 3, None), new Source { FishData = fish });
-        Assert.Equal(new[] { "hint.caught(done=1,total=3)", "hint.fish.places(places=Beach, Ocean)", "hint.fish.time(times=6am to 7pm)", "hint.fish.rainy", "hint.fish.noweather" }, lines);
+        Assert.Equal(new[] { "hint.fish.places(places=Beach, Ocean)", "hint.fish.time(times=6am to 7pm)", "hint.fish.rainy", "hint.fish.noweather" }, lines);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class HintBuilderTests
     {
         var fish = new FishInfo(new[] { "Beach" }, false, null, "both");
         var lines = Build(new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 1, 3, None), new Source { FishData = fish }, new ModConfig { ShowFishInfo = false });
-        Assert.Equal(new[] { "hint.caught(done=1,total=3)" }, lines);
+        Assert.Empty(lines);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class HintBuilderTests
     {
         var fish = new FishInfo(new[] { "Beach" }, false, null, "both");
         var lines = Build(new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 3, 3, None), new Source { FishData = fish });
-        Assert.Equal(new[] { "hint.caught(done=3,total=3)", "hint.return(npc=WILLY)" }, lines);
+        Assert.Equal(new[] { "hint.return(npc=WILLY)" }, lines);
     }
 
     [Fact]
@@ -189,8 +189,7 @@ public class HintBuilderTests
     {
         var names = Enumerable.Range(1, 11).Select(n => "n" + n).ToList();
         var lines = Build(new QuestFact("5", FactKind.Socialize, null, null, null, 2, 13, names));
-        Assert.Equal("hint.greeted(done=2,total=13)", lines[0]);
-        Assert.Equal("hint.left(names=N1, N2, N3, N4, N5, N6, N7, N8 hint.more(count=3))", lines[1]);
+        Assert.Equal(new[] { "hint.left(names=N1, N2, N3, N4, N5, N6, N7, N8 hint.more(count=3))" }, lines);
     }
 
     [Fact]
@@ -239,7 +238,7 @@ public class HintBuilderOrderTests
     public void AnOpenKillQuestDoesNotSayWhereThePersonIs()
     {
         var lines = HintBuilder.Build(new QuestFact("2", FactKind.Slay, "Lewis", null, "Slime", 1, 5, Array.Empty<string>()), new ModConfig(), new Source(), new Texts());
-        Assert.Equal(new[] { "hint.slain" }, lines);
+        Assert.Empty(lines);
     }
 
     [Fact]

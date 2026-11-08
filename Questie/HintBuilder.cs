@@ -117,12 +117,10 @@ namespace Questie
                     break;
 
                 case FactKind.Slay:
-                    AddProgress(lines, "hint.slain", fact, text);
                     AddHandIn(lines, fact, config, source, text);
                     break;
 
                 case FactKind.Fish:
-                    AddProgress(lines, "hint.caught", fact, text);
                     if (fact.CountDone)
                         AddHandIn(lines, fact, config, source, text);
                     else
@@ -130,7 +128,6 @@ namespace Questie
                     break;
 
                 case FactKind.Gather:
-                    AddProgress(lines, "hint.collected", fact, text);
                     if (fact.CountDone)
                         AddHandIn(lines, fact, config, source, text);
                     else
@@ -142,7 +139,6 @@ namespace Questie
                     break;
 
                 case FactKind.Socialize:
-                    AddProgress(lines, "hint.greeted", fact, text);
                     AddNames(lines, fact, source, text);
                     break;
 
@@ -204,12 +200,6 @@ namespace Questie
             lines.Add(building.Builder is { Length: > 0 } builder
                 ? text.Get("hint.build.by", ("builder", source.NpcName(builder)), ("cost", list))
                 : text.Get("hint.build", ("cost", list)));
-        }
-
-        private static void AddProgress(List<string> lines, string key, QuestFact fact, IHintTexts text)
-        {
-            if (fact.Need > 1)
-                lines.Add(text.Get(key, ("done", fact.Have.ToString()), ("total", fact.Need.ToString())));
         }
 
         private static void AddCarry(List<string> lines, QuestFact fact, IHintSource source, IHintTexts text)

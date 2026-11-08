@@ -7,7 +7,7 @@ namespace Questie
     public static class ItemNeeds
     {
         /// <summary>The most quests named in one tooltip.</summary>
-        private const int MaxQuests = 2;
+        public const int MaxQuests = 2;
 
         /// <summary>
         /// Whether the quest wants this item to be held or found. A delivery and a found lost item are handed over from the backpack

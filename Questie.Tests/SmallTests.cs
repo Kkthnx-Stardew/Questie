@@ -91,10 +91,10 @@ public class ShippedFilesTests
         var keys = Keys(Path.Combine(ProjectDir(), "i18n", "default.json"));
         var asked = new[]
         {
-            "hint.slain", "hint.caught", "hint.collected", "hint.greeted", "hint.carry", "hint.return", "hint.where", "hint.fish.places",
+            "hint.carry", "hint.return", "hint.where", "hint.fish.places",
             "hint.fish.time", "hint.fish.sunny", "hint.fish.rainy", "hint.craft.known", "hint.craft.unknown", "hint.cook.known",
             "hint.cook.unknown", "hint.left", "hint.more", "hint.here", "hint.lost", "hint.fish.trap", "hint.fish.everywhere",
-            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "hint.and", "hint.price", "hint.ingredient", "hint.time.range", "hint.bring.2", "hint.bring.3", "hint.bring.10", "hint.bring.21", "hint.bring.22", "hint.bring.29", "hint.bring.127", "hint.depth.mines", "hint.depth.skull", "hint.build.by", "hint.build", "hint.build.gold", "note.bring", "hint.fish.seasons", "hint.fish.noseason", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
+            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "hint.and", "hint.order.carry", "hint.order.carry.each", "hint.order.onestack", "hint.order.deliver", "hint.order.donate", "hint.order.ship", "note.order.deliver", "note.order.donate", "note.order.ship", "hint.price", "hint.ingredient", "hint.time.range", "hint.bring.2", "hint.bring.3", "hint.bring.10", "hint.bring.21", "hint.bring.22", "hint.bring.29", "hint.bring.127", "hint.depth.mines", "hint.depth.skull", "hint.build.by", "hint.build", "hint.build.gold", "note.bring", "hint.fish.seasons", "hint.fish.noseason", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
         };
         foreach (var key in asked)
             Assert.Contains(key, keys);
