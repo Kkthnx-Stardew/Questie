@@ -16,7 +16,7 @@ namespace Questie
         /// </summary>
         public static bool Wants(QuestFact fact) => fact.ItemId is not null && fact.Kind switch
         {
-            FactKind.Deliver => true,
+            FactKind.Deliver or FactKind.Bring => true,
             FactKind.LostItem => fact.Have > 0,
             FactKind.Fish or FactKind.Gather => !fact.CountDone,
             _ => false,
@@ -50,6 +50,9 @@ namespace Questie
                 {
                     case FactKind.Deliver when npc is not null:
                         notes.Add(texts.Get("note.deliver", ("quest", quest), ("count", fact.Need.ToString()), ("npc", npc)));
+                        break;
+                    case FactKind.Bring:
+                        notes.Add(texts.Get("note.bring", ("quest", quest), ("count", fact.Need.ToString())));
                         break;
                     case FactKind.LostItem when npc is not null:
                         notes.Add(texts.Get("note.lost", ("quest", quest), ("npc", npc)));

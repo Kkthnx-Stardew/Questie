@@ -30,6 +30,10 @@ public class HintBuilderTests
         public RecipeInfo? Recipe(string qualifiedItemId) => RecipeData;
         public int ClockNow { get; set; } = 1200;
         public bool RainingNow { get; set; }
+        public BuildingInfo? Building(string buildingType) => null;
+        public int DeepestLevel(string area) => 0;
+        public int SeasonNow { get; set; } = 1;
+        public string SeasonName(int season) => new[] { "spring", "summer", "fall", "winter" }[season];
         public List<ShopOffer> Offers = new();
         public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Offers;
     }
@@ -224,6 +228,10 @@ public class HintBuilderOrderTests
         public RecipeInfo? Recipe(string qualifiedItemId) => null;
         public int ClockNow => 1200;
         public bool RainingNow => false;
+        public BuildingInfo? Building(string buildingType) => null;
+        public int DeepestLevel(string area) => 0;
+        public int SeasonNow => 1;
+        public string SeasonName(int season) => "s" + season;
         public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Array.Empty<ShopOffer>();
     }
 
@@ -269,6 +277,10 @@ public class HintBuilderShopAndClockTests
         public RecipeInfo? Recipe(string qualifiedItemId) => null;
         public int ClockNow => Clock;
         public bool RainingNow => Raining;
+        public BuildingInfo? Building(string buildingType) => null;
+        public int DeepestLevel(string area) => 0;
+        public int SeasonNow => 1;
+        public string SeasonName(int season) => "s" + season;
         public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Offers;
     }
 
@@ -276,6 +288,45 @@ public class HintBuilderShopAndClockTests
 
     private static List<string> Build(QuestFact fact, Source source, ModConfig? config = null) =>
         HintBuilder.Build(fact, config ?? new ModConfig(), source, new Texts());
+
+    private static FishInfo SeasonalFish(params int[] seasons) =>
+        new(new[] { "Beach" }, false, null, "both", null, null, seasons);
+
+    [Fact]
+    public void AFishSaysWhichSeasonsItBitesIn()
+    {
+        var source = new Source { FishData = SeasonalFish(0, 1) };
+        var lines = Build(new QuestFact("1", FactKind.Fish, "Willy", "(O)145", null, 0, 1, None), source);
+        Assert.Contains("hint.fish.seasons(seasons=s0hint.ands1)", lines);
+    }
+
+    [Fact]
+    public void ThreeSeasonsAreListedWithCommasAndAnAnd()
+    {
+        var source = new Source { FishData = SeasonalFish(0, 1, 2) };
+        var lines = Build(new QuestFact("1", FactKind.Fish, "Willy", "(O)145", null, 0, 1, None), source);
+        Assert.Contains("hint.fish.seasons(seasons=s0, s1hint.ands2)", lines);
+    }
+
+    [Fact]
+    public void OutOfSeasonSaysSoAndSkipsTheClock()
+    {
+        // the fake's season now is 1, summer, so a winter fish is out of season
+        var source = new Source { FishData = new FishInfo(new[] { "Beach" }, false, "6am to 7pm", "sunny", null, new[] { (600, 1900) }, new[] { 3 }), Clock = 1200 };
+        var lines = Build(new QuestFact("1", FactKind.Fish, "Willy", "(O)707", null, 0, 1, None), source);
+        Assert.Contains("hint.fish.noseason", lines);
+        Assert.DoesNotContain("hint.fish.now", lines);
+        Assert.DoesNotContain("hint.fish.notime", lines);
+    }
+
+    [Fact]
+    public void InSeasonKeepsTheRightNowLine()
+    {
+        var source = new Source { FishData = new FishInfo(new[] { "Beach" }, false, "6am to 7pm", "both", null, new[] { (600, 1900) }, new[] { 1 }), Clock = 1200 };
+        var lines = Build(new QuestFact("1", FactKind.Fish, "Willy", "(O)128", null, 0, 1, None), source);
+        Assert.Contains("hint.fish.now", lines);
+        Assert.DoesNotContain("hint.fish.noseason", lines);
+    }
 
     [Fact]
     public void AShopThatSellsTheItemIsNamedWithItsPrice()

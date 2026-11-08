@@ -48,55 +48,91 @@ namespace Questie
             var time = windows.Count == 0 || FishTimes.IsAllDay(windows) ? null : FishTimes.FormatWindows(windows, Game1.getTimeOfDayString);
             var weather = fields.Length > 7 ? fields[7] : "both";
 
-            var everywhere = FishesAnywhere(qualifiedItemId);
-            var places = everywhere ? new List<string>() : Places(qualifiedItemId);
-            return new FishInfo(places, everywhere, time, weather, null, windows);
+            var rules = RulesFor(qualifiedItemId, out var defaultRule);
+            var everywhere = defaultRule is not null;
+
+            // The game catches a fish by the rules of the place alone and never by the seasons in the fish's own entry, which a fish
+            // can be caught outside of, as on Ginger Island. So the seasons are the ones the rules allow.
+            var seasons = Union(everywhere ? rules.Select(r => r.Rule).Append(defaultRule!.Value) : rules.Select(r => r.Rule));
+            var places = everywhere ? new List<string>() : Places(rules, seasons);
+            return new FishInfo(places, everywhere, time, weather, null, windows, seasons);
         }
 
-        /// <summary>Whether the game's default list, which every place falls back on, includes the fish.</summary>
-        private static bool FishesAnywhere(string qualifiedItemId)
-        {
-            if (!Game1.locationData.TryGetValue("Default", out var data) || data.Fish is null)
-                return false;
-            foreach (var spawn in data.Fish)
-            {
-                if (Matches(spawn, qualifiedItemId))
-                    return true;
-            }
-            return false;
-        }
+        /// <summary>What one place's rules say about a fish.</summary>
+        /// <param name="AllYear">Whether any rule holds in every season.</param>
+        /// <param name="Seasons">The seasons the other rules name, as 0 spring to 3 winter.</param>
+        private readonly record struct Rule(bool AllYear, IReadOnlyCollection<int> Seasons);
 
-        private List<string> Places(string qualifiedItemId)
+        /// <summary>Locations that only hold a festival's or a minigame's fish, which are not places to go fishing.</summary>
+        private static readonly HashSet<string> NotPlaces = new(StringComparer.Ordinal) { "Temp", "fishingGame" };
+
+        private static readonly int[] WholeYear = { 0, 1, 2, 3 };
+
+        /// <summary>The rules that name the fish in each place, and in the default list every place falls back on.</summary>
+        private static List<(string Name, LocationData Data, Rule Rule)> RulesFor(string qualifiedItemId, out Rule? defaultRule)
         {
-            var places = new List<string>();
+            defaultRule = null;
+            var rules = new List<(string, LocationData, Rule)>();
             foreach (var (name, location) in Game1.locationData)
             {
-                if (name == "Default" || location.Fish is null)
+                if (location.Fish is null || NotPlaces.Contains(name))
                     continue;
-
-                var allYear = false;
-                var seasons = new List<Season>();
-                var found = false;
-                foreach (var spawn in location.Fish)
-                {
-                    if (!Matches(spawn, qualifiedItemId))
-                        continue;
-                    found = true;
-                    if (spawn.Season is { } season)
-                    {
-                        if (!seasons.Contains(season))
-                            seasons.Add(season);
-                    }
-                    else
-                        allYear = true;
-                }
-                if (!found)
+                if (RuleIn(location, qualifiedItemId) is not { } rule)
                     continue;
+                if (name == "Default")
+                    defaultRule = rule;
+                else
+                    rules.Add((name, location, rule));
+            }
+            return rules;
+        }
 
+        private static Rule? RuleIn(LocationData location, string qualifiedItemId)
+        {
+            var allYear = false;
+            var seasons = new SortedSet<int>();
+            var found = false;
+            foreach (var spawn in location.Fish)
+            {
+                // a rule that only holds on festival days is not a place the fish lives in
+                if (!Matches(spawn, qualifiedItemId) || spawn.Condition?.Contains("FESTIVAL", StringComparison.OrdinalIgnoreCase) == true)
+                    continue;
+                found = true;
+
+                // a rule names its season in its own field or in its condition, and a rule with neither holds all year
+                var named = spawn.Season is { } season ? new[] { (int)season } : FishTimes.SeasonsInCondition(spawn.Condition)?.ToArray();
+                if (named is null)
+                    allYear = true;
+                else
+                    seasons.UnionWith(named);
+            }
+            return found ? new Rule(allYear, seasons) : null;
+        }
+
+        /// <summary>The seasons the rules allow together, or null when they allow every season, or none is named.</summary>
+        private static IReadOnlyList<int>? Union(IEnumerable<Rule> rules)
+        {
+            var union = new SortedSet<int>();
+            foreach (var rule in rules)
+            {
+                if (rule.AllYear)
+                    return null;
+                union.UnionWith(rule.Seasons);
+            }
+            return union.Count is 0 or 4 ? null : union.ToList();
+        }
+
+        private List<string> Places(List<(string Name, LocationData Data, Rule Rule)> rules, IReadOnlyList<int>? fishSeasons)
+        {
+            var places = new List<string>();
+            foreach (var (name, location, rule) in rules)
+            {
                 var display = DisplayName(name, location);
-                places.Add(allYear || seasons.Count == 0 || seasons.Count == 4
-                    ? display
-                    : $"{display} ({string.Join(", ", seasons.OrderBy(s => (int)s).Select(s => Utility.getSeasonNameFromNumber((int)s).ToLowerInvariant()))})");
+                // a place's seasons are only worth saying when they differ from the fish's own, which is said once on its own line
+                var differs = !rule.AllYear && rule.Seasons.Count is > 0 and < 4 && !rule.Seasons.SequenceEqual(fishSeasons ?? WholeYear);
+                places.Add(differs
+                    ? $"{display} ({string.Join(", ", rule.Seasons.Select(s => Utility.getSeasonNameFromNumber(s).ToLowerInvariant()))})"
+                    : display);
             }
 
             places = places.Distinct(StringComparer.Ordinal).ToList();
@@ -116,7 +152,8 @@ namespace Questie
         private static string DisplayName(string internalName, LocationData data)
         {
             var named = string.IsNullOrWhiteSpace(data.DisplayName) ? null : TokenParser.ParseText(data.DisplayName);
-            if (!string.IsNullOrWhiteSpace(named))
+            // a name whose text the game cannot find comes back as "(no translation:key)", which is no name to show
+            if (!string.IsNullOrWhiteSpace(named) && !named.StartsWith("(no translation:", StringComparison.Ordinal))
                 return named;
 
             // a place with no display name in its data may still have one on the live location, for example the Ginger Island areas
@@ -125,7 +162,7 @@ namespace Questie
                 return live;
 
             // nothing readable anywhere, so split the internal name into words, such as IslandSouthEast into Island South East
-            return System.Text.RegularExpressions.Regex.Replace(internalName, "(?<=[a-z])(?=[A-Z])", " ").Replace('_', ' ');
+            return NameText.Humanize(internalName);
         }
     }
 }

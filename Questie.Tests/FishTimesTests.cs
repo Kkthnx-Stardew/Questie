@@ -83,3 +83,28 @@ public class FishTimesNowTests
         Assert.Equal(expected, FishTimes.WeatherSuits(weather, raining));
     }
 }
+
+public class FishSeasonTests
+{
+    [Theory]
+    [InlineData("LOCATION_SEASON Here spring summer", new[] { 0, 1 })]
+    [InlineData("SEASON winter", new[] { 3 })]
+    [InlineData("IS_FESTIVAL_DAY, SEASON winter, YEAR 2, RANDOM 0.4", new[] { 3 })]
+    [InlineData("LOCATION_SEASON Here fall winter, SEASON winter", new[] { 3 })]
+    public void AConditionNamesItsSeasons(string condition, int[] expected)
+    {
+        Assert.Equal(expected, FishTimes.SeasonsInCondition(condition));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("!IS_FESTIVAL_DAY")]
+    [InlineData("WEATHER Here Rain")]
+    [InlineData("!SEASON winter")]
+    [InlineData("LOCATION_SEASON Here spring summer fall winter")]
+    public void AConditionWithNoSeasonsOrADeniedOneGivesNone(string? condition)
+    {
+        Assert.Null(FishTimes.SeasonsInCondition(condition));
+    }
+}

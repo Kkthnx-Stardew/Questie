@@ -11,6 +11,9 @@ namespace Questie
         /// <summary>The id of the quest that asks for any slime. The game counts every slime-like monster for it.</summary>
         private const string SlimeQuestId = "15";
 
+        /// <summary>The Skull Cavern's levels count on from the mines' last level, so its first level is this plus one in the deepest level the farmer has reached.</summary>
+        private const int SkullCavernStart = 120;
+
         private const string SlimeKinds = "Slime|Jelly|Sludge";
 
         /// <summary>Replaces the list with a fact for each unfinished quest of a kind the mod knows.</summary>
@@ -62,10 +65,27 @@ namespace Questie
                 case CraftingQuest crafting:
                     return new QuestFact(id, FactKind.Craft, null, Qualify(crafting.ItemId.Value), null, 0, 1, None);
 
+                case ItemHarvestQuest harvest:
+                    // the item can also be a whole category, written as a negative number, which has no picture or name to show
+                    var harvested = Qualify(harvest.ItemId.Value);
+                    return new QuestFact(id, FactKind.Harvest, null, harvested is { Length: > 0 } && !harvested.StartsWith('-') ? harvested : null, null, 0, Math.Max(1, harvest.Number.Value), None);
+
+                case HaveBuildingQuest building:
+                    return new QuestFact(id, FactKind.Build, null, null, null, 0, 1, None, Clean(building.buildingType.Value));
+
                 case GoSomewhereQuest go:
                     return new QuestFact(id, FactKind.Go, null, null, null, 0, 1, None, Clean(go.whereToGo.Value));
 
                 default:
+                    // a story quest of the plain kind, known by its id
+                    if (quest.GetType() == typeof(Quest) && StoryQuests.TryGet(id, out var story))
+                    {
+                        if (story.ItemId is not null)
+                            return new QuestFact(id, FactKind.Bring, null, story.ItemId, null, 0, story.Count, None);
+                        var level = Game1.player.deepestMineLevel;
+                        var reached = story.Area == "skull" ? Math.Max(0, level - SkullCavernStart) : Math.Min(level, SkullCavernStart);
+                        return new QuestFact(id, FactKind.Depth, null, null, null, Math.Min(reached, story.Level), story.Level, None, story.Area);
+                    }
                     return null;
             }
         }

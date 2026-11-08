@@ -13,7 +13,14 @@ namespace Questie
     /// <param name="Weather">"sunny", "rainy" or "both".</param>
     /// <param name="TrapWater">For a fish that is caught in a crab pot, "freshwater" or "ocean". Null for a fish that is caught with a rod.</param>
     /// <param name="Windows">The clock windows the fish bites in, used to say whether it bites now. Null or empty means all day.</param>
-    public sealed record FishInfo(IReadOnlyList<string> Places, bool Everywhere, string? Time, string Weather, string? TrapWater = null, IReadOnlyList<(int Start, int End)>? Windows = null);
+    /// <param name="Seasons">The seasons it bites in, as 0 spring to 3 winter. Null when it bites in every season.</param>
+    public sealed record FishInfo(IReadOnlyList<string> Places, bool Everywhere, string? Time, string Weather, string? TrapWater = null, IReadOnlyList<(int Start, int End)>? Windows = null, IReadOnlyList<int>? Seasons = null);
+
+    /// <summary>What it takes to have a building built.</summary>
+    /// <param name="Builder">The person who builds it, or null when the data names none.</param>
+    /// <param name="Gold">The gold it costs, 0 or less when it is free.</param>
+    /// <param name="Materials">The items it takes, as qualified ids with how many of each.</param>
+    public sealed record BuildingInfo(string? Builder, int Gold, IReadOnlyList<(string ItemId, int Amount)> Materials);
 
     /// <summary>A shop that sells an item. The price is 0 or less when the shop data does not state one. Sometimes is true when the shop only stocks it under a condition, such as a season.</summary>
     public sealed record ShopOffer(string Seller, int Price, bool Sometimes = false);
@@ -70,6 +77,18 @@ namespace Questie
 
         /// <summary>Whether it is raining where the farmer is.</summary>
         bool RainingNow { get; }
+
+        /// <summary>The cost and builder of a building type, or null when the type is not known.</summary>
+        BuildingInfo? Building(string buildingType);
+
+        /// <summary>How deep the farmer has been, in the mines (up to the bottom at 120) or in the Skull Cavern (counted from its first level).</summary>
+        int DeepestLevel(string area);
+
+        /// <summary>The season it is now, as 0 spring to 3 winter.</summary>
+        int SeasonNow { get; }
+
+        /// <summary>The name of a season, as 0 spring to 3 winter, in the player's language.</summary>
+        string SeasonName(int season);
 
         /// <summary>The shops that sell an item for gold, best known first.</summary>
         IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId);
@@ -138,12 +157,53 @@ namespace Questie
                     AddRecipe(lines, fact, config, source, text);
                     break;
 
+                case FactKind.Bring:
+                    AddCarry(lines, fact, source, text);
+                    AddFish(lines, fact, config, source, text);
+                    AddShops(lines, fact, config, source, text);
+                    AddRecipe(lines, fact, config, source, text);
+                    lines.Add(text.Get("hint.bring." + fact.Id));
+                    break;
+
+                case FactKind.Harvest:
+                    AddCarry(lines, fact, source, text);
+                    AddShops(lines, fact, config, source, text);
+                    break;
+
+                case FactKind.Build:
+                    AddBuilding(lines, fact, source, text);
+                    break;
+
+                case FactKind.Depth:
+                    if (fact.Place is "mines" or "skull")
+                        lines.Add(text.Get("hint.depth." + fact.Place, ("have", fact.Have.ToString()), ("need", fact.Need.ToString())));
+                    break;
+
                 case FactKind.Go:
                     if (fact.Place is not null && source.PlaceName(fact.Place) is { Length: > 0 } where)
                         lines.Add(text.Get("hint.go", ("place", where)));
                     break;
             }
             return lines;
+        }
+
+        private static void AddBuilding(List<string> lines, QuestFact fact, IHintSource source, IHintTexts text)
+        {
+            if (fact.Place is null || source.Building(fact.Place) is not { } building)
+                return;
+
+            var cost = new List<string>();
+            if (building.Gold > 0)
+                cost.Add(text.Get("hint.build.gold", ("gold", building.Gold.ToString())));
+            foreach (var (itemId, amount) in building.Materials)
+                cost.Add(amount + " " + source.ItemName(itemId));
+            if (cost.Count == 0)
+                return;
+
+            var list = JoinNames(cost, text);
+            lines.Add(building.Builder is { Length: > 0 } builder
+                ? text.Get("hint.build.by", ("builder", source.NpcName(builder)), ("cost", list))
+                : text.Get("hint.build", ("cost", list)));
         }
 
         private static void AddProgress(List<string> lines, string key, QuestFact fact, IHintTexts text)
@@ -198,6 +258,8 @@ namespace Questie
                 lines.Add(text.Get("hint.fish.everywhere"));
             else if (fish.Places.Count > 0)
                 lines.Add(text.Get("hint.fish.places", ("places", string.Join(", ", fish.Places))));
+            if (fish.TrapWater is null && fish.Seasons is { Count: > 0 } seasons)
+                lines.Add(text.Get("hint.fish.seasons", ("seasons", JoinNames(seasons.Select(source.SeasonName).ToList(), text))));
             if (!string.IsNullOrEmpty(fish.Time))
                 lines.Add(text.Get("hint.fish.time", ("times", fish.Time)));
             if (fish.Weather is "sunny" or "rainy")
@@ -205,13 +267,22 @@ namespace Questie
 
             // Whether it bites right now is only worth a line for a fish that has a time or a weather it cares about.
             var picky = !string.IsNullOrEmpty(fish.Time) || fish.Weather is "sunny" or "rainy";
-            if (fish.TrapWater is null && picky)
+            if (fish.TrapWater is null && fish.Seasons is { Count: > 0 } open && !open.Contains(source.SeasonNow))
+            {
+                // out of season, so the time and the weather do not matter yet
+                lines.Add(text.Get("hint.fish.noseason"));
+            }
+            else if (fish.TrapWater is null && picky)
             {
                 var timeOk = FishTimes.IsOpen(fish.Windows ?? Array.Empty<(int, int)>(), source.ClockNow);
                 var weatherOk = FishTimes.WeatherSuits(fish.Weather, source.RainingNow);
                 lines.Add(text.Get(timeOk && weatherOk ? "hint.fish.now" : !timeOk ? "hint.fish.notime" : "hint.fish.noweather"));
             }
         }
+
+        /// <summary>Names as a list in words, "spring", "spring and summer", "spring, summer and fall".</summary>
+        private static string JoinNames(IReadOnlyList<string> names, IHintTexts text) =>
+            names.Count <= 1 ? string.Concat(names) : string.Join(", ", names.Take(names.Count - 1)) + text.Get("hint.and") + names[^1];
 
         /// <summary>The most shops named for one item.</summary>
         public const int MaxShops = 3;

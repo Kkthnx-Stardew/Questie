@@ -6,7 +6,7 @@ namespace Questie
     public static class FishTimes
     {
         /// <summary>
-        /// The times of day a fish bites, from the time field of Data/Fish: pairs of 24 hour clock values such as "600 2600"
+        /// The times of day a fish bites, from the time field of Data/Fish, pairs of 24 hour clock values such as "600 2600"
         /// (up to 2am the next day). Returns an empty list when the field is blank or cannot be read.
         /// </summary>
         public static List<(int Start, int End)> ParseWindows(string? field)
@@ -24,6 +24,58 @@ namespace Questie
                     windows.Add((start, end));
             }
             return windows;
+        }
+
+        private static readonly string[] SeasonWords = { "spring", "summer", "fall", "winter" };
+
+        /// <summary>
+        /// The seasons a location rule asks for in its condition, such as "LOCATION_SEASON Here spring summer" or "SEASON winter".
+        /// A condition holds clauses split by commas that all have to hold, so the seasons of every plain clause are taken together.
+        /// A clause that denies a season is not understood, and a condition with one gives no seasons. Null when there are none.
+        /// </summary>
+        public static IReadOnlyList<int>? SeasonsInCondition(string? condition)
+        {
+            if (string.IsNullOrWhiteSpace(condition))
+                return null;
+
+            IReadOnlyList<int>? found = null;
+            foreach (var clause in condition.Split(','))
+            {
+                var parts = clause.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 0)
+                    continue;
+                if (parts[0].StartsWith('!'))
+                {
+                    if (parts[0].TrimStart('!') is "SEASON" or "LOCATION_SEASON")
+                        return null;
+                    continue;
+                }
+                var skip = parts[0] == "LOCATION_SEASON" ? 2 : parts[0] == "SEASON" ? 1 : -1;
+                if (skip < 0)
+                    continue;
+
+                var seasons = Distinct(parts.Skip(skip));
+                if (seasons is null)
+                    continue;
+                // clauses that all have to hold narrow each other down
+                found = found is null ? seasons : found.Intersect(seasons).OrderBy(s => s).ToList();
+            }
+            return found;
+        }
+
+        private static IEnumerable<string> Words(string? field) =>
+            string.IsNullOrWhiteSpace(field) ? Array.Empty<string>() : field.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        private static IReadOnlyList<int>? Distinct(IEnumerable<string> words)
+        {
+            var seasons = new SortedSet<int>();
+            foreach (var word in words)
+            {
+                var index = Array.IndexOf(SeasonWords, word.ToLowerInvariant());
+                if (index >= 0)
+                    seasons.Add(index);
+            }
+            return seasons.Count == 0 || seasons.Count == 4 ? null : seasons.ToList();
         }
 
         /// <summary>Whether the windows cover the whole day, so no time needs to be mentioned.</summary>

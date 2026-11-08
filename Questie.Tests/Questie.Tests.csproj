@@ -29,6 +29,8 @@
     <Compile Include="..\Questie\ItemNeeds.cs" Link="ItemNeeds.cs" />
     <Compile Include="..\Questie\PanelLayout.cs" Link="PanelLayout.cs" />
     <Compile Include="..\Questie\IconText.cs" Link="IconText.cs" />
+    <Compile Include="..\Questie\StoryQuests.cs" Link="StoryQuests.cs" />
+    <Compile Include="..\Questie\NameText.cs" Link="NameText.cs" />
   </ItemGroup>
 
 </Project>

@@ -7,7 +7,7 @@ namespace Questie
     {
         public bool Any => Remove.Count > 0 || Add.Count > 0;
 
-        /// <summary>How much the quest's total changes by: each villager added counts, each one removed no longer does.</summary>
+        /// <summary>How much the quest's total changes by. Each villager added counts, each one removed no longer does.</summary>
         public int TotalChange => Add.Count - Remove.Count;
     }
 

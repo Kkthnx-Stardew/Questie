@@ -33,6 +33,8 @@ namespace Questie
 
         private const int NoWidth = -1;
 
+        private static readonly RasterizerState ClipToScissor = new() { ScissorTestEnable = true };
+
         private sealed class Cached
         {
             // far enough in the past that the first request always builds, and small enough that subtracting it cannot overflow
@@ -40,6 +42,9 @@ namespace Questie
             public string Text = "";
             public IReadOnlyList<IconSpot> Spots = Array.Empty<IconSpot>();
             public int LineCount;
+
+            /// <summary>How many lines the whole description, the game's text and these notes, wraps to in the quest log. Zero when there are no pictures.</summary>
+            public int TotalLines;
 
             /// <summary>The text width the lines were laid out for, or <see cref="NoWidth"/> when they carry no pictures.</summary>
             public int Width = NoWidth;
@@ -77,7 +82,11 @@ namespace Questie
         }
 
         /// <summary>Drops every stored line, for example when the language changes.</summary>
-        public static void Forget() => Cache.Clear();
+        public static void Forget()
+        {
+            Cache.Clear();
+            Portraits.Clear();
+        }
 
         /// <summary>The width the quest log wraps a description to while it is open and pictures are wanted, or <see cref="NoWidth"/>.</summary>
         private static int LogTextWidth() =>
@@ -102,6 +111,7 @@ namespace Questie
                 try
                 {
                     Lay(cached, Build(__instance), width);
+                    cached.TotalLines = cached.Spots.Count == 0 ? 0 : CountLines(Game1.parseText(__result + "\n\n" + cached.Text, Game1.dialogueFont, width));
                 }
                 catch (Exception ex)
                 {
@@ -110,6 +120,7 @@ namespace Questie
                     cached.Text = "";
                     cached.Spots = Array.Empty<IconSpot>();
                     cached.LineCount = 0;
+                    cached.TotalLines = 0;
                     cached.Width = width;
                     if (++_failures <= MaxLoggedFailures)
                         _monitor?.Log($"Could not add notes to the quest '{__instance.questTitle}'. ({ex.GetType().Name}: {ex.Message})", LogLevel.Warn);
@@ -118,6 +129,8 @@ namespace Questie
             if (cached.Text.Length > 0)
                 __result = __result + "\n\n" + cached.Text;
         }
+
+        private static int CountLines(string wrapped) => wrapped.Count(c => c == '\n') + 1;
 
         /// <summary>Lays the lines out for the quest log, leaving room for pictures, or strips the pictures' markers anywhere else.</summary>
         private static void Lay(Cached cached, string text, int width)
@@ -154,9 +167,8 @@ namespace Questie
             try
             {
                 var font = Game1.dialogueFont;
-                var lines = Game1.parseText(____shownQuest.GetDescription(), font, __instance.width - LogTextInset).Count(c => c == '\n') + 1;
-                var firstNoteLine = lines - cached.LineCount;
-                if (firstNoteLine < 0)
+                var firstNoteLine = cached.TotalLines - cached.LineCount;
+                if (cached.TotalLines == 0 || firstNoteLine < 0)
                     return;
 
                 // the same offsets the game draws the description with
@@ -166,12 +178,36 @@ namespace Questie
                 var bottom = __instance.yPositionOnScreen + __instance.height - 32;
                 var lineHeight = font.LineSpacing;
 
-                foreach (var spot in cached.Spots)
+                // the pictures are clipped to the description's frame exactly as the text is, so a line half scrolled out keeps its picture
+                var frame = Utility.ConstrainScissorRectToScreen(new Rectangle(__instance.xPositionOnScreen + 32, top, __instance.width - 64, bottom - top));
+                var opened = false;
+                var savedScissor = b.GraphicsDevice.ScissorRectangle;
+                try
                 {
-                    var y = top - __instance.scrollAmount + (firstNoteLine + spot.Line) * lineHeight + (lineHeight - IconSize) / 2f;
-                    if (y < top || y + IconSize > bottom)
-                        continue; // scrolled out of the description's frame
-                    DrawIcon(b, spot, new Vector2(left + spot.X, y));
+                    foreach (var spot in cached.Spots)
+                    {
+                        var y = top - __instance.scrollAmount + (firstNoteLine + spot.Line) * lineHeight + (lineHeight - IconSize) / 2f;
+                        if (y + IconSize <= top || y >= bottom)
+                            continue; // scrolled out of the description's frame
+                        if (!opened)
+                        {
+                            opened = true;
+                            b.End();
+                            b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, ClipToScissor);
+                            b.GraphicsDevice.ScissorRectangle = frame;
+                        }
+                        DrawIcon(b, spot, new Vector2(left + spot.X, y));
+                    }
+                }
+                finally
+                {
+                    if (opened)
+                    {
+                        // back to the state the game's drawing left the batch in
+                        b.End();
+                        b.GraphicsDevice.ScissorRectangle = savedScissor;
+                        b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
+                    }
                 }
             }
             catch (Exception ex)
@@ -180,11 +216,26 @@ namespace Questie
             }
         }
 
+        /// <summary>Portraits looked up recently. Finding a villager searches every place, and with a big expansion that is a lot of places for each picture each frame.</summary>
+        private static readonly Dictionary<string, (int Tick, Texture2D? Portrait)> Portraits = new(StringComparer.Ordinal);
+
+        /// <summary>How long a portrait is kept, in game updates. A villager's portrait only changes with the season or an outfit.</summary>
+        private const int PortraitTicks = 120;
+
+        private static Texture2D? PortraitOf(string name)
+        {
+            if (Portraits.TryGetValue(name, out var known) && Game1.ticks - known.Tick < PortraitTicks && Game1.ticks >= known.Tick)
+                return known.Portrait;
+            var portrait = Game1.getCharacterFromName(name)?.Portrait;
+            Portraits[name] = (Game1.ticks, portrait);
+            return portrait;
+        }
+
         private static void DrawIcon(SpriteBatch b, IconSpot spot, Vector2 at)
         {
             if (spot.Kind == IconKind.Npc)
             {
-                if (Game1.getCharacterFromName(spot.Id)?.Portrait is { } portrait)
+                if (PortraitOf(spot.Id) is { } portrait)
                     b.Draw(portrait, at, new Rectangle(0, 0, 64, 64), Color.White, 0f, Vector2.Zero, IconSize / 64f, SpriteEffects.None, 1f);
                 return;
             }

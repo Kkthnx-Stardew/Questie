@@ -45,6 +45,7 @@ namespace Questie
             helper.Events.Player.InventoryChanged += (_, e) => { if (e.IsLocalPlayer) Refresh(); };
             helper.Events.Display.RenderedWorld += OnRenderedWorld;
             helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
+            helper.Events.Display.MenuChanged += (_, _) => _donations.Release();
             helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             helper.Events.Content.LocaleChanged += (_, _) => ForgetLookups();
 
@@ -81,6 +82,24 @@ namespace Questie
         {
             Repair();
             Refresh();
+            WarmUp();
+        }
+
+        /// <summary>
+        /// Builds the shop and recipe indexes now, while the save is still loading, so the first time the quest log is opened does not
+        /// stop for the few frames it takes. They are built again, when asked for, if the game's data changes later.
+        /// </summary>
+        private void WarmUp()
+        {
+            try
+            {
+                _shops.Find("(O)0");
+                _recipes.Find("(O)0");
+            }
+            catch (Exception ex)
+            {
+                Monitor.Log($"Could not get the shop and recipe lists ready ahead of time, so they are built when first needed. ({ex.Message})", LogLevel.Trace);
+            }
         }
 
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -168,6 +187,7 @@ namespace Questie
             _recipes.Reset();
             _shops.Reset();
             _chests.Reset();
+            _donations.Reset();
             QuestHints.Forget();
         }
 

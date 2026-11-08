@@ -7,7 +7,7 @@ namespace Questie
 {
     /// <summary>
     /// Draws the bouncing markers over the people and monsters the quests need, using the game's own pictures so they look like part
-    /// of the game: an exclamation mark for a hand-in, a speech bubble for someone to greet and a skull for a monster.
+    /// of the game, an exclamation mark for a hand-in, a speech bubble for someone to greet and a skull for a monster.
     /// </summary>
     internal sealed class QuestMarkers
     {
@@ -57,7 +57,7 @@ namespace Questie
             }
         }
 
-        /// <summary>The spot above a character's head, in world pixels: its sprite stands on its tile and reaches up from there.</summary>
+        /// <summary>The spot above a character's head, in world pixels. Its sprite stands on its tile and reaches up from there.</summary>
         private static Vector2 Above(NPC npc, float lift)
         {
             var height = npc.Sprite?.getHeight() ?? 32;

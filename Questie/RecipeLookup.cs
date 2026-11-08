@@ -41,7 +41,7 @@ namespace Questie
                 return;
             foreach (var (name, text) in recipes)
             {
-                // crafting: ingredients / unused / output / big craftable / unlock / name. cooking: ingredients / unused / output / unlock / name.
+                // crafting has ingredients / unused / output / big craftable / unlock / name, and cooking has ingredients / unused / output / unlock / name.
                 var fields = text.Split('/');
                 if (fields.Length < 4)
                     continue;

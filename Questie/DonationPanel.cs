@@ -22,31 +22,80 @@ namespace Questie
         /// <summary>The frames and the margin around the slots of a menu, which the panel stays clear of too.</summary>
         private const int FrameAllowance = 32;
 
-        private readonly record struct Row(string Text, bool Done, bool Progress, int Need);
+        private readonly record struct Row(string Text, bool Done, bool Progress, int Need, string? Icon = null, bool Indent = false);
 
         private readonly record struct Content(string[] Title, List<Row> Rows, int Height);
 
+        /// <summary>The laid out panel, kept for a few frames. Working the text out for every objective on every frame costs far more than drawing it.</summary>
+        private sealed class Layout
+        {
+            public SpecialOrder Order = null!;
+            public int Tick;
+            public Box Occupied;
+            public int ScreenWidth;
+            public int ScreenHeight;
+            public Box Spot;
+            public string[] Title = Array.Empty<string>();
+            public List<Row> Rows = new();
+            public string More = "";
+        }
+
+        /// <summary>How long a layout is kept, in game updates. The counts follow items moved in or out within a tenth of a second.</summary>
+        private const int RefreshTicks = 6;
+
+        private Layout? _layout;
+
+        /// <summary>The size an item's picture is drawn at, in pixels, and the room it takes in front of a line.</summary>
+        private const int IconSize = 32;
+
+        private const int IconRoom = IconSize + 8;
+
         private readonly IHintTexts _texts;
+        private readonly ItemTagIndex _tags = new();
 
         public DonationPanel(IHintTexts texts) => _texts = texts;
+
+        /// <summary>Forgets the items found by tag. Called when the game's item data changes.</summary>
+        public void Reset() => _tags.Reset();
+
+        /// <summary>Lets go of the order the panel was showing. Called when a menu opens or closes, since nothing is drawn once there is no menu.</summary>
+        public void Release() => _layout = null;
 
         public void Draw(SpriteBatch batch)
         {
             if (Game1.activeClickableMenu is not QuestContainerMenu menu || Game1.player?.team?.specialOrders is not { } orders)
+            {
+                _layout = null; // lets go of the order once its box is closed
                 return;
+            }
 
             var order = FindOrder(orders, menu);
             if (order is null)
+            {
+                _layout = null;
                 return;
+            }
 
-            var needs = ReadNeeds(order);
-            if (needs.Count == 0)
-                return;
-
-            var title = _texts.Get("donate.title", ("order", order.GetName()));
             var occupied = Occupied(menu);
             var screenWidth = Game1.uiViewport.Width;
             var screenHeight = Game1.uiViewport.Height;
+            if (_layout is null || !ReferenceEquals(_layout.Order, order) || Game1.ticks - _layout.Tick >= RefreshTicks || Game1.ticks < _layout.Tick
+                || _layout.Occupied != occupied || _layout.ScreenWidth != screenWidth || _layout.ScreenHeight != screenHeight)
+                _layout = Arrange(order, occupied, screenWidth, screenHeight);
+
+            if (_layout is { Rows.Count: > 0 } ready)
+                DrawLayout(batch, ready);
+        }
+
+        /// <summary>Works out what the panel says and where it goes.</summary>
+        private Layout Arrange(SpecialOrder order, Box occupied, int screenWidth, int screenHeight)
+        {
+            var layout = new Layout { Order = order, Tick = Game1.ticks, Occupied = occupied, ScreenWidth = screenWidth, ScreenHeight = screenHeight };
+            var needs = ReadNeeds(order);
+            if (needs.Count == 0)
+                return layout;
+
+            var title = _texts.Get("donate.title", ("order", order.GetName()));
 
             var wanted = TextWidth + Padding * 2;
             var content = Compose(title, needs, TextWidth);
@@ -58,28 +107,47 @@ namespace Questie
                 spot = PanelLayout.Place(occupied, screenWidth, screenHeight, spot.Width, spot.Width, content.Height).Box;
             }
             if (spot.Width <= Padding * 2 || spot.Height <= Padding * 2)
-                return;
+                return layout;
 
+            layout.Spot = spot;
+            layout.Title = content.Title;
+            layout.Rows = Fit(content, spot.Height, LineHeight(Game1.smallFont), out var hidden);
+            layout.More = hidden > 0 ? _texts.Get("donate.more", ("count", hidden.ToString())) : "";
+            return layout;
+        }
+
+        private static void DrawLayout(SpriteBatch batch, Layout layout)
+        {
+            var spot = layout.Spot;
             var font = Game1.smallFont;
             var lineHeight = LineHeight(font);
-            var rows = Fit(content, spot.Height, lineHeight, out var hidden);
 
             IClickableMenu.drawTextureBox(batch, Game1.menuTexture, new Rectangle(0, 256, 60, 60), spot.X, spot.Y, spot.Width, spot.Height, Color.White);
 
             var cursorY = spot.Y + Padding;
-            foreach (var line in content.Title)
+            foreach (var line in layout.Title)
             {
                 Utility.drawTextWithShadow(batch, line, Game1.dialogueFont, new Vector2(spot.X + Padding, cursorY), Game1.textColor);
                 cursorY += LineHeight(Game1.dialogueFont);
             }
             cursorY += TitleGap;
-            foreach (var row in rows)
+            foreach (var row in layout.Rows)
             {
-                Utility.drawTextWithShadow(batch, row.Text, font, new Vector2(spot.X + Padding, cursorY), row.Done ? Color.ForestGreen : row.Progress ? Game1.unselectedOptionColor : Game1.textColor);
+                var textX = spot.X + Padding + (row.Indent ? IconRoom : 0);
+                if (row.Icon is not null)
+                    DrawIcon(batch, row.Icon, new Vector2(spot.X + Padding, cursorY + (lineHeight - IconSize) / 2f));
+                Utility.drawTextWithShadow(batch, row.Text, font, new Vector2(textX, cursorY), row.Done ? Color.ForestGreen : row.Progress ? Game1.unselectedOptionColor : Game1.textColor);
                 cursorY += lineHeight;
             }
-            if (hidden > 0)
-                Utility.drawTextWithShadow(batch, _texts.Get("donate.more", ("count", hidden.ToString())), font, new Vector2(spot.X + Padding, cursorY), Game1.unselectedOptionColor);
+            if (layout.More.Length > 0)
+                Utility.drawTextWithShadow(batch, layout.More, font, new Vector2(spot.X + Padding, cursorY), Game1.unselectedOptionColor);
+        }
+
+        private static void DrawIcon(SpriteBatch batch, string qualifiedItemId, Vector2 at)
+        {
+            var data = ItemRegistry.GetDataOrErrorItem(qualifiedItemId);
+            var source = data.GetSourceRect();
+            batch.Draw(data.GetTexture(), at, source, Color.White, 0f, Vector2.Zero, IconSize / (float)Math.Max(source.Width, source.Height), SpriteEffects.None, 1f);
         }
 
         private static int LineHeight(SpriteFont font) => (int)font.MeasureString("Ag").Y;
@@ -91,11 +159,18 @@ namespace Questie
             var rows = new List<Row>();
             for (var i = 0; i < needs.Count; i++)
             {
-                foreach (var line in Game1.parseText(needs[i].Text, Game1.smallFont, textWidth).Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                    rows.Add(new Row(line, needs[i].Done, false, i));
+                // a line with an item's picture is indented to make room for it, and the picture sits beside its first row
+                var icon = needs[i].IconTag is { } tag ? _tags.Find(tag) : null;
+                var indent = icon is not null;
+                var first = true;
+                foreach (var line in Game1.parseText(needs[i].Text, Game1.smallFont, indent ? textWidth - IconRoom : textWidth).Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    rows.Add(new Row(line, needs[i].Done, false, i, first ? icon : null, indent));
+                    first = false;
+                }
                 var progress = DonationLines.Progress(needs[i], _texts);
                 if (progress.Length > 0)
-                    rows.Add(new Row(progress, needs[i].Done, true, i));
+                    rows.Add(new Row(progress, needs[i].Done, true, i, null, indent));
             }
             var height = Padding * 2 + titleLines.Length * LineHeight(Game1.dialogueFont) + TitleGap + rows.Count * LineHeight(Game1.smallFont);
             return new Content(titleLines, rows, height);
@@ -121,7 +196,7 @@ namespace Questie
             return content.Rows.Take(keep).ToList();
         }
 
-        /// <summary>Everything the menu uses: the box, the backpack, the buttons, and the frames around them.</summary>
+        /// <summary>Everything the menu uses, the box, the backpack, the buttons and the frames around them.</summary>
         private static Box Occupied(QuestContainerMenu menu)
         {
             Box? union = null;
@@ -158,7 +233,8 @@ namespace Questie
             {
                 // every objective is listed so the item is named ("Gather 24 eggs"), but only the donation counts what is in the box
                 var objective = order.objectives[i];
-                needs.Add(new DonationNeed(descriptions[i], objective.GetCount(), objective.GetMaxCount(), objective is DonateObjective));
+                var iconTag = objective is DonateObjective donate ? DonationLines.IconTag(donate.acceptableContextTagSets) : null;
+                needs.Add(new DonationNeed(descriptions[i], objective.GetCount(), objective.GetMaxCount(), objective is DonateObjective, iconTag));
             }
             return needs;
         }

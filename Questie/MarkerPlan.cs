@@ -12,7 +12,7 @@ namespace Questie
         Greet = 2,
     }
 
-    /// <summary>A marker over a person: what it means, and for a delivery the qualified id of the item to show beside it.</summary>
+    /// <summary>A marker over a person, what it means, and for a delivery the qualified id of the item to show beside it.</summary>
     public readonly record struct Mark(MarkKind Kind, string? ItemId);
 
     /// <summary>

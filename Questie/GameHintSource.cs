@@ -56,6 +56,25 @@ namespace Questie
 
         public int ClockNow => Game1.timeOfDay;
 
+        public BuildingInfo? Building(string buildingType)
+        {
+            if (!DataLoader.Buildings(Game1.content).TryGetValue(buildingType, out var data))
+                return null;
+            var materials = new List<(string, int)>();
+            foreach (var material in data.BuildMaterials ?? new())
+            {
+                if (material.ItemId is not null && material.Amount > 0)
+                    materials.Add((ItemRegistry.QualifyItemId(material.ItemId) ?? material.ItemId, material.Amount));
+            }
+            return new BuildingInfo(string.IsNullOrWhiteSpace(data.Builder) ? null : data.Builder, data.BuildCost, materials);
+        }
+
+        public int DeepestLevel(string area) => area == "skull" ? Math.Max(0, Game1.player.deepestMineLevel - 120) : Math.Min(Game1.player.deepestMineLevel, 120);
+
+        public int SeasonNow => Game1.seasonIndex;
+
+        public string SeasonName(int season) => Utility.getSeasonNameFromNumber(season).ToLowerInvariant();
+
         public bool RainingNow => Game1.currentLocation is { } place && Game1.IsRainingHere(place);
 
         public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => _shops.Find(qualifiedItemId);

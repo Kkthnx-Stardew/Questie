@@ -15,6 +15,10 @@ public class ItemNeedsTests
         public RecipeInfo? Recipe(string qualifiedItemId) => null;
         public int ClockNow => 1200;
         public bool RainingNow => false;
+        public BuildingInfo? Building(string buildingType) => null;
+        public int DeepestLevel(string area) => 0;
+        public int SeasonNow => 1;
+        public string SeasonName(int season) => "s" + season;
         public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Array.Empty<ShopOffer>();
     }
 

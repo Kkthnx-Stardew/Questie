@@ -7,8 +7,9 @@ namespace Questie
 {
     /// <summary>
     /// Makes a Socialize quest such as Introductions match the villagers who exist now, using the game's own rule for who counts.
-    /// The rule is the one the game uses when it first writes the quest: a villager counts when their data says so, or when their
-    /// home region is the Town, and only the ones the Social tab does not show from the start have to be greeted.
+    /// The rule is the one the game uses when it first writes the quest. A villager counts when their data says so, or when their
+    /// home region is the Town, and only the ones the Social tab does not show from the start have to be greeted. A villager is only
+    /// added once they are in the world, because a mod can hold one back until a condition is met.
     /// </summary>
     internal static class SocializeFixer
     {
@@ -25,7 +26,9 @@ namespace Questie
                 if (!(data.IntroductionsQuest ?? data.HomeRegion == "Town"))
                     continue;
                 sociable.Add(name);
-                if (data.SocialTab != SocialTabBehavior.AlwaysShown)
+                // a villager a mod only unlocks later is in the data but not in the world yet, and the quest cannot be finished
+                // by greeting someone who is not there, so they are added on the day they appear
+                if (data.SocialTab != SocialTabBehavior.AlwaysShown && Game1.getCharacterFromName(name) is not null)
                     needGreeting.Add(name);
             }
 

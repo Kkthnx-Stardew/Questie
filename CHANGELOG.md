@@ -2,6 +2,23 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.4 (2026-11-08)
+
+- Fishing quests now say which seasons the fish bites in, such as "Bites in spring and summer.", and say "It is not in season now." when it is the wrong season, instead of a right now line that could not be true. The seasons come from the season rules of each place, including the ones written as conditions, because those are what the game catches fish by. Before, only the places with a plain season field were read, so most fish showed no season at all.
+- Festival and minigame places are no longer listed as places to fish.
+- Story quests that ask you to bring an item are covered. They are the rainbow shell, the beets for the mayor's fridge, the copper ore, the cave carrot, the largemouth bass for the fish casserole, the maple syrup for the strange note and the chocolate cake for the cake-walk. Each shows how many you carry, where to take it and how to get it, and the item is marked in your backpack.
+- Building quests say who builds the building and what it costs.
+- Harvest quests show how many of the item you carry.
+- The quests about reaching a level in the mines or the Skull Cavern say how deep you have been.
+
+- The list beside a donation box now puts the item's own picture in front of each line that asks for one item, such as the void souls and hardwood of the Bridge Magic order. A line that takes several kinds, such as any red item, has no picture.
+- A pass over speed, memory and tidiness. The donation list and the quest log pictures are laid out once and reused instead of rebuilt every frame, the shop and recipe lists are built while a save loads so the first journal opening does not pause, the donation list lets go of its order when the box closes, and pictures in the quest log are clipped to the page like the text so a half scrolled line keeps its portraits. Measured numbers are in docs/PERFORMANCE.md.
+- A donation line that accepts one of several lists of items no longer shows the picture of only the first.
+- A place whose name the game cannot find is no longer listed as "(no translation...)", and shop names with an acronym, such as RSV Heaps Store, are split into words.
+- Checked with Stardew Valley Expanded, Ridgeside Village, East Scarp, Sunberry Village and More New Fish loaded together. Everything loaded without a problem from Questie, and their fish, villagers, shops, recipes, quests and donation orders were read correctly.
+- The meeting quest repair only adds a villager once that villager is in the world, because an expansion can hold villagers back until a condition is met and the quest could not be finished by greeting someone who is not there.
+- Portraits are looked up less often in the quest log, because finding a villager searches every place and an expansion adds a lot of places.
+
 ## 0.9.0-beta.3 (2026-11-08)
 
 - Pictures in the quest log. A villager's name gets their portrait in front of it and an item's name gets the item's own picture, in the notes of a delivery, a gathering quest, a lost item, a meeting quest and the rest. The text leaves room for each picture, and a name never splits across two lines.

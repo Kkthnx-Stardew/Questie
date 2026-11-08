@@ -58,7 +58,7 @@ namespace Questie
                         return NPC.GetDisplayName(name);
                 }
             }
-            return System.Text.RegularExpressions.Regex.Replace(shopId, "(?<=[a-z])(?=[A-Z])", " ").Replace('_', ' ');
+            return NameText.Humanize(shopId);
         }
     }
 }

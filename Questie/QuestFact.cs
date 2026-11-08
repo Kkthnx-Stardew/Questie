@@ -26,6 +26,18 @@ namespace Questie
 
         /// <summary>Go to a place.</summary>
         Go,
+
+        /// <summary>Bring an item to a place, as a story quest of the plain kind asks.</summary>
+        Bring,
+
+        /// <summary>Harvest or make an item, which counts as soon as it is in the backpack.</summary>
+        Harvest,
+
+        /// <summary>Have a building built.</summary>
+        Build,
+
+        /// <summary>Reach a level in the mines or the Skull Cavern.</summary>
+        Depth,
     }
 
     /// <summary>
@@ -37,7 +49,7 @@ namespace Questie
     /// <param name="Npc">The person to hand in to, or null when the quest has none.</param>
     /// <param name="ItemId">The item involved, or null.</param>
     /// <param name="Monster">The name part a monster must contain, or null.</param>
-    /// <param name="Have">How much of the quest is done: caught, killed, gathered or greeted so far. For a lost item, 1 once it is found.</param>
+    /// <param name="Have">How much of the quest is done, caught, killed, gathered or greeted so far. For a lost item, 1 once it is found.</param>
     /// <param name="Need">How much it asks for in all.</param>
     /// <param name="Remaining">For Socialize, the villagers still to greet. Empty otherwise.</param>
     /// <param name="Place">For a lost item that is not found yet, the internal name of the place it lies in, or null.</param>

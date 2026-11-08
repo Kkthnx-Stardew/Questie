@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.3). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.4). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -20,8 +20,10 @@ This is a beta (0.9.0-beta.3). It works and has been tested in the game, but it 
 
 - The villager's portrait or the item's own picture in front of each name, so who and what is easy to see at a glance.
 - Progress such as "Caught 1 of 3", "Slain 2 of 5" or "Greeted 2 of 28", and how many you carry of what a delivery or gathering quest needs, with how many more lie in your chests and fridge, such as "You carry 0 Stone, have 50 in chests, and need 25."
-- For a fishing quest, where the fish bites, in which seasons, at what times of day and in what weather, and whether it can be caught right now. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
+- For a fishing quest, where the fish bites, which seasons it bites in, at what times of day and in what weather, and whether it can be caught right now, or that it is out of season. The seasons come from the rules of each place, the ones the game catches fish by, so a fish that only bites in winter says so and one that can be caught year round on Ginger Island is not called out of season. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
 - For a delivery or gathering quest, which shops sell the item and for how much.
+- For the story quests that ask you to bring something, such as the largemouth bass for Jodi's fish casserole or the chocolate cake for Haley's cake-walk, how many you carry, where to take it, how to catch or cook it and where it is sold.
+- For a building quest, who builds it and what it costs. For the quests about reaching a level in the mines or the Skull Cavern, how deep you have been.
 - For an item quest, how to make the item and whether you know the recipe. When you know it, each ingredient shows how many you carry, such as "Egg (2 of 1)". When you do not, it says how to learn it, such as at 3 hearts with Emily or at Foraging level 6.
 - Who is left to meet in a meeting quest, and where a person is right now (or that they are here).
 - Where a lost item lies, until you find it.
@@ -38,9 +40,9 @@ This is a beta (0.9.0-beta.3). It works and has been tested in the game, but it 
 
 ![Quest items marked in the backpack, with the tooltip](docs/images/item-marks.png)
 
-**Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out. The list stays clear of the box and your backpack, and says how many lines more there are when the screen has no room for all of them.
+**Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out. Each line that asks for one item has that item's picture in front of it. The list stays clear of the box and your backpack, and says how many lines more there are when the screen has no room for all of them.
 
-![A donation box with the order's list](docs/images/donation-box.png)
+![A donation box with the order's list and the items' pictures](docs/images/donation-box.png)
 
 **A warning on the last day.** When a timed quest, such as a Help Wanted request, is on its last day, a message tells you as the day starts.
 
@@ -92,6 +94,10 @@ Everything is on by default. Edit `config.json` after the first run, or use Gene
 ## Performance
 
 Markers are worked out when something changes and twice a second, and drawn from a lookup, so a frame does no searching. The item marks cost one set lookup for each slot on screen. Measured in the game with five quests, working out the markers takes about a microsecond and asking for a quest's notes about a twentieth of a microsecond. The notes themselves are rebuilt at most three times a second for the quest on screen. More in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
+## Works with expansions
+
+Tried in the game with Stardew Valley Expanded 1.15.11, Ridgeside Village 2.5.17, East Scarp 3.0.9, Sunberry Village and More New Fish, among about seventy mods. Their villagers get markers, portraits and a place on a meeting quest the way the game's own do, their fish show their places and seasons, their shops and recipes are named, and their donation orders get the list beside the box, such as the Bridge Magic order. Quests those mods add that are of the game's usual kinds work like any other. Quests they add as plain story quests, such as a multi-fish brew or the Sunberry seedling, show the game's own text only.
 
 ## Limits
 

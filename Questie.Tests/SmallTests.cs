@@ -94,7 +94,7 @@ public class ShippedFilesTests
             "hint.slain", "hint.caught", "hint.collected", "hint.greeted", "hint.carry", "hint.return", "hint.where", "hint.fish.places",
             "hint.fish.time", "hint.fish.sunny", "hint.fish.rainy", "hint.craft.known", "hint.craft.unknown", "hint.cook.known",
             "hint.cook.unknown", "hint.left", "hint.more", "hint.here", "hint.lost", "hint.fish.trap", "hint.fish.everywhere",
-            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
+            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "hint.and", "hint.bring.2", "hint.bring.3", "hint.bring.10", "hint.bring.21", "hint.bring.22", "hint.bring.29", "hint.bring.127", "hint.depth.mines", "hint.depth.skull", "hint.build.by", "hint.build", "hint.build.gold", "note.bring", "hint.fish.seasons", "hint.fish.noseason", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
         };
         foreach (var key in asked)
             Assert.Contains(key, keys);
@@ -147,5 +147,53 @@ public class DonationLinesTests
         var step = new DonationNeed("Gather 24 eggs.", 0, 24, false);
         Assert.Equal("", DonationLines.Progress(step, new Texts()));
         Assert.False(step.Done);
+    }
+}
+
+public class DonationIconTagTests
+{
+    [Theory]
+    [InlineData("item_hardwood", "item_hardwood")]
+    [InlineData(" item_void_soul ", "item_void_soul")]
+    public void OneItemTagNamesAnItem(string set, string expected)
+    {
+        Assert.Equal(expected, DonationLines.IconTag(new[] { set }));
+    }
+
+    [Theory]
+    [InlineData("color_red/color_dark_red")]
+    [InlineData("item_geode/item_frozen_geode")]
+    [InlineData("egg_item")]
+    [InlineData("item_wood,category_resource")]
+    [InlineData("")]
+    public void ColoursAlternativesAndCategoriesNameNoSingleItem(string set)
+    {
+        Assert.Null(DonationLines.IconTag(new[] { set }));
+    }
+
+    [Fact]
+    public void SeveralTagListsAreAlternativesSoTheyNameNoSingleItem()
+    {
+        Assert.Null(DonationLines.IconTag(new[] { "item_hardwood", "item_wood" }));
+    }
+
+    [Fact]
+    public void NoTagSetsNameNothing()
+    {
+        Assert.Null(DonationLines.IconTag(Array.Empty<string>()));
+    }
+}
+
+public class NameTextTests
+{
+    [Theory]
+    [InlineData("IslandSouthEast", "Island South East")]
+    [InlineData("RSVHeapsStore", "RSV Heaps Store")]
+    [InlineData("Custom_Claire_WarpRoom", "Custom Claire Warp Room")]
+    [InlineData("Beach", "Beach")]
+    [InlineData("", "")]
+    public void AnInternalNameBecomesWords(string name, string expected)
+    {
+        Assert.Equal(expected, NameText.Humanize(name));
     }
 }
