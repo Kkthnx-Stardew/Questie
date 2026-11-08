@@ -36,6 +36,9 @@ namespace Questie
         /// <summary>Say where a quest's person is right now.</summary>
         public bool ShowWhereIsNpc { get; set; } = true;
 
+        /// <summary>Put the villager's portrait or the item's picture in front of its name in the quest log.</summary>
+        public bool ShowNameIcons { get; set; } = true;
+
         /// <summary>Mark the items a quest wants with a small exclamation mark in the backpack, chests and toolbar, and say why in the tooltip.</summary>
         public bool ShowItemMarks { get; set; } = true;
 

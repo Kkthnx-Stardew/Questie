@@ -7,6 +7,7 @@ public class ItemNeedsTests
         public string NpcName(string npc) => npc.ToUpperInvariant();
         public string ItemName(string qualifiedItemId) => "name" + qualifiedItemId;
         public int Carried(string qualifiedItemId) => 0;
+        public int InChests(string qualifiedItemId) => 0;
         public bool IsHere(string npc) => false;
         public string? WhereIs(string npc) => null;
         public string? PlaceName(string internalName) => internalName;

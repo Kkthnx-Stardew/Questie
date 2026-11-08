@@ -10,13 +10,15 @@ namespace Questie
         private readonly FishLookup _fish;
         private readonly RecipeLookup _recipes;
         private readonly ShopLookup _shops;
+        private readonly ChestLookup _chests;
 
-        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes, ShopLookup shops)
+        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes, ShopLookup shops, ChestLookup chests)
         {
             _i18n = i18n;
             _fish = fish;
             _recipes = recipes;
             _shops = shops;
+            _chests = chests;
         }
 
         // ---------------------------------------------------------------- words
@@ -33,11 +35,14 @@ namespace Questie
 
         // ---------------------------------------------------------------- the game
 
-        public string NpcName(string npc) => NPC.GetDisplayName(npc);
+        // Names carry a marker so the quest log can put the portrait or the item picture in front of them. Anything else strips it.
+        public string NpcName(string npc) => IconText.Mark(IconKind.Npc, npc, NPC.GetDisplayName(npc));
 
-        public string ItemName(string qualifiedItemId) => ItemRegistry.GetDataOrErrorItem(qualifiedItemId).DisplayName;
+        public string ItemName(string qualifiedItemId) => IconText.Mark(IconKind.Item, qualifiedItemId, ItemRegistry.GetDataOrErrorItem(qualifiedItemId).DisplayName);
 
         public int Carried(string qualifiedItemId) => Game1.player.Items.CountId(qualifiedItemId);
+
+        public int InChests(string qualifiedItemId) => _chests.Count(qualifiedItemId);
 
         public bool IsHere(string npc) => Game1.getCharacterFromName(npc) is { } person && ReferenceEquals(person.currentLocation, Game1.currentLocation);
 

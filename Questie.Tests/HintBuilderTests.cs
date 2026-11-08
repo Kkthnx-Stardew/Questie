@@ -21,6 +21,8 @@ public class HintBuilderTests
         public string NpcName(string npc) => npc.ToUpperInvariant();
         public string ItemName(string qualifiedItemId) => "item" + qualifiedItemId;
         public int Carried(string qualifiedItemId) => CarriedCount;
+        public int ChestCount;
+        public int InChests(string qualifiedItemId) => ChestCount;
         public bool IsHere(string npc) => Here;
         public string? WhereIs(string npc) => Place;
         public string? PlaceName(string internalName) => PlaceDisplay;
@@ -36,6 +38,21 @@ public class HintBuilderTests
 
     private static List<string> Build(QuestFact fact, Source? source = null, ModConfig? config = null) =>
         HintBuilder.Build(fact, config ?? new ModConfig(), source ?? new Source(), new Texts());
+
+    [Fact]
+    public void StockInChestsIsAddedToTheCarryLine()
+    {
+        var lines = Build(new QuestFact("1", FactKind.Gather, "Clint", "(O)390", null, 0, 25, None), new Source { CarriedCount = 0, ChestCount = 50 });
+        Assert.Contains("hint.carry.chests(count=0,chests=50,total=25,item=item(O)390)", lines);
+    }
+
+    [Fact]
+    public void NoChestStockKeepsTheShortCarryLine()
+    {
+        var lines = Build(new QuestFact("1", FactKind.Deliver, "Pierre", "(O)24", null, 0, 2, None), new Source { CarriedCount = 1, ChestCount = 0 });
+        Assert.Contains("hint.carry(count=1,total=2,item=item(O)24)", lines);
+        Assert.DoesNotContain(lines, l => l.StartsWith("hint.carry.chests"));
+    }
 
     [Fact]
     public void ADeliveryShowsWhatIsCarriedAndWhereThePersonIs()
@@ -199,6 +216,7 @@ public class HintBuilderOrderTests
         public string NpcName(string npc) => npc;
         public string ItemName(string qualifiedItemId) => qualifiedItemId;
         public int Carried(string qualifiedItemId) => 0;
+        public int InChests(string qualifiedItemId) => 0;
         public bool IsHere(string npc) => false;
         public string? WhereIs(string npc) => "Town";
         public string? PlaceName(string internalName) => internalName;
@@ -243,6 +261,7 @@ public class HintBuilderShopAndClockTests
         public string NpcName(string npc) => npc;
         public string ItemName(string qualifiedItemId) => qualifiedItemId;
         public int Carried(string qualifiedItemId) => 0;
+        public int InChests(string qualifiedItemId) => 0;
         public bool IsHere(string npc) => false;
         public string? WhereIs(string npc) => null;
         public string? PlaceName(string internalName) => null;

@@ -19,6 +19,7 @@ namespace Questie
         private FishLookup _fish = null!; // set in Entry
         private RecipeLookup _recipes = null!; // set in Entry
         private ShopLookup _shops = null!; // set in Entry
+        private ChestLookup _chests = null!; // set in Entry
         private GameHintSource _source = null!; // set in Entry
         private DonationPanel _donations = null!; // set in Entry
 
@@ -29,7 +30,8 @@ namespace Questie
             _fish = new FishLookup(count => helper.Translation.Get("hint.more", new { count }));
             _recipes = new RecipeLookup();
             _shops = new ShopLookup();
-            _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops);
+            _chests = new ChestLookup();
+            _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops, _chests);
             QuestHints.Apply(Monitor, () => _config, _source);
             _donations = new DonationPanel(_source);
             ItemBadges.Apply(Monitor, () => _config, () => _tracker.Value, _source);
@@ -165,6 +167,7 @@ namespace Questie
             _fish.Reset();
             _recipes.Reset();
             _shops.Reset();
+            _chests.Reset();
             QuestHints.Forget();
         }
 

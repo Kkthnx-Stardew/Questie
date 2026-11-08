@@ -51,6 +51,9 @@ namespace Questie
         string ItemName(string qualifiedItemId);
         int Carried(string qualifiedItemId);
 
+        /// <summary>How many of the item lie in chests and the fridge, not counting what the farmer carries.</summary>
+        int InChests(string qualifiedItemId);
+
         /// <summary>Whether the person is in the same place as the farmer right now.</summary>
         bool IsHere(string npc);
 
@@ -153,7 +156,13 @@ namespace Questie
         {
             if (fact.ItemId is null)
                 return;
-            lines.Add(text.Get("hint.carry", ("count", source.Carried(fact.ItemId).ToString()), ("total", Math.Max(1, fact.Need).ToString()), ("item", source.ItemName(fact.ItemId))));
+            var count = source.Carried(fact.ItemId).ToString();
+            var total = Math.Max(1, fact.Need).ToString();
+            var item = source.ItemName(fact.ItemId);
+            var chests = source.InChests(fact.ItemId);
+            lines.Add(chests > 0
+                ? text.Get("hint.carry.chests", ("count", count), ("chests", chests.ToString()), ("total", total), ("item", item))
+                : text.Get("hint.carry", ("count", count), ("total", total), ("item", item)));
         }
 
         private static void AddHandIn(List<string> lines, QuestFact fact, ModConfig config, IHintSource source, IHintTexts text)

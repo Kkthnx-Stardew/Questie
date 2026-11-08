@@ -121,7 +121,7 @@ namespace Questie
                     _noteItem = id;
                     _noteTick = Game1.ticks;
                     var lines = ItemNeeds.Notes(id, _tracker!().Facts, _source!, _source!);
-                    _note = lines.Count == 0 ? "" : string.Join("\n", lines.Select(line => Game1.parseText(line, Game1.smallFont, TooltipWidth).TrimEnd()));
+                    _note = lines.Count == 0 ? "" : string.Join("\n", lines.Select(line => Game1.parseText(IconText.Strip(line), Game1.smallFont, TooltipWidth).TrimEnd()));
                 }
                 if (_note.Length == 0)
                     return;

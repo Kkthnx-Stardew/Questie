@@ -2,6 +2,12 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.3 (2026-11-08)
+
+- Pictures in the quest log. A villager's name gets their portrait in front of it and an item's name gets the item's own picture, in the notes of a delivery, a gathering quest, a lost item, a meeting quest and the rest. The text leaves room for each picture, and a name never splits across two lines.
+- Stock in chests. A delivery or gathering quest now says how many of the item lie in your chests and fridge as well as in your backpack, such as "You carry 0 Stone, have 50 in chests, and need 25." A mini shipping bin and a loader are not counted, and a Junimo chest is counted once however many show it. The count is taken again at most once a second, and only while a quest note asks for it.
+- A setting to turn the pictures off, in config.json and Generic Mod Config Menu.
+
 ## 0.9.0-beta.2 (2026-11-08)
 
 - The list beside a donation box no longer covers the box or the backpack. It is placed clear of everything the menu uses, on the left or the right, narrower when the sides are tight, and above or below when there is no room at the sides. An order with more lines than fit shows the first ones whole and says how many more there are. Before, a long order such as one with seven objectives hid backpack slots.

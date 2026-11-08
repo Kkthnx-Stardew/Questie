@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.2). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.3). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -18,7 +18,8 @@ This is a beta (0.9.0-beta.2). It works and has been tested in the game, but it 
 
 **Notes in the journal.** Lines are added to the end of a quest's description, so nothing the game says is replaced.
 
-- Progress such as "Caught 1 of 3", "Slain 2 of 5" or "Greeted 2 of 28", and how many you carry of what a delivery or gathering quest needs.
+- The villager's portrait or the item's own picture in front of each name, so who and what is easy to see at a glance.
+- Progress such as "Caught 1 of 3", "Slain 2 of 5" or "Greeted 2 of 28", and how many you carry of what a delivery or gathering quest needs, with how many more lie in your chests and fridge, such as "You carry 0 Stone, have 50 in chests, and need 25."
 - For a fishing quest, where the fish bites, in which seasons, at what times of day and in what weather, and whether it can be caught right now. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
 - For a delivery or gathering quest, which shops sell the item and for how much.
 - For an item quest, how to make the item and whether you know the recipe. When you know it, each ingredient shows how many you carry, such as "Egg (2 of 1)". When you do not, it says how to learn it, such as at 3 hearts with Emily or at Foraging level 6.
@@ -28,6 +29,10 @@ This is a beta (0.9.0-beta.2). It works and has been tested in the game, but it 
 ![A fishing quest with notes](docs/images/log-fishing.png)
 
 ![A meeting quest with notes](docs/images/log-meeting.png)
+
+![Portraits in front of names, in a meeting quest](docs/images/log-portraits.png)
+
+![An item picture in front of its name, and the count in chests](docs/images/log-chests.png)
 
 **Marks on items.** An item a quest wants gets the game's own quest exclamation mark in the top left corner of its slot, in your backpack, in chests and on the toolbar, the way the quality star sits in the bottom left. Hover over it and the tooltip says which quest wants it and what to do. A delivery item is marked until you hand it in. A fish or a resource is marked until you have caught or gathered enough.
 
@@ -72,6 +77,7 @@ Everything is on by default. Edit `config.json` after the first run, or use Gene
 | `ShowHints` | Add notes to the end of quests in the journal. |
 | `ShowFishInfo` | Say where, when and in what weather a fish bites. |
 | `ShowShops` | Say which shops sell the item a quest wants. |
+| `ShowNameIcons` | Put the portrait or item picture in front of a name in the quest log. |
 | `ShowRecipes` | Say how to craft or cook an item, and how to learn the recipe. |
 | `ShowWhereIsNpc` | Say where a quest's person is right now. |
 | `ShowItemMarks` | Mark the items a quest wants with an exclamation mark, and add a line to their tooltip. |
