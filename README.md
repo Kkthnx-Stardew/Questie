@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.1). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.2). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -33,7 +33,7 @@ This is a beta (0.9.0-beta.1). It works and has been tested in the game, but it 
 
 ![Quest items marked in the backpack, with the tooltip](docs/images/item-marks.png)
 
-**Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out.
+**Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out. The list stays clear of the box and your backpack, and says how many lines more there are when the screen has no room for all of them.
 
 ![A donation box with the order's list](docs/images/donation-box.png)
 

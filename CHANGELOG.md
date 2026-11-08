@@ -2,6 +2,10 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.2 (2026-11-08)
+
+- The list beside a donation box no longer covers the box or the backpack. It is placed clear of everything the menu uses, on the left or the right, narrower when the sides are tight, and above or below when there is no room at the sides. An order with more lines than fit shows the first ones whole and says how many more there are. Before, a long order such as one with seven objectives hid backpack slots.
+
 ## 0.9.0-beta.1 (2026-11-08)
 
 The first beta. Version 1.0 is kept for the first full release. Built against Stardew Valley 1.6.15 and SMAPI 4.5.2 with no warnings, and 96 tests pass. It was run in the game alone and with one host and one joining player on one computer. Three or more players, split screen and play over the internet are untested.

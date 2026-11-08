@@ -31,6 +31,7 @@
     "donate.title": "{{order}}",
     "donate.progress": "{{have}} of {{need}}, {{left}} to go",
     "donate.done": "Done",
+    "donate.more": "And {{count}} more.",
     "hint.fish.trap": "Catch it in a crab pot in {{water}} water.",
     "hint.fish.everywhere": "Bites almost anywhere.",
     "hint.unlock.friendship": "Learn it at {{hearts}} hearts with {{npc}}.",

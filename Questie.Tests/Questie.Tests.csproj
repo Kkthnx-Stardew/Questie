@@ -27,6 +27,7 @@
     <Compile Include="..\Questie\SocializeRepair.cs" Link="SocializeRepair.cs" />
     <Compile Include="..\Questie\DonationLines.cs" Link="DonationLines.cs" />
     <Compile Include="..\Questie\ItemNeeds.cs" Link="ItemNeeds.cs" />
+    <Compile Include="..\Questie\PanelLayout.cs" Link="PanelLayout.cs" />
   </ItemGroup>
 
 </Project>

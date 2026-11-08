@@ -8,7 +8,7 @@ namespace Questie
         public bool Done => Counted && Have >= Need;
     }
 
-    /// <summary>Turns a donation need into the second line of the panel. This file has no game dependencies so the tests can compile it.</summary>
+    /// <summary>Turns a donation need into the progress line of the panel. This file has no game dependencies so the tests can compile it.</summary>
     public static class DonationLines
     {
         /// <summary>"12 of 40, 28 to go", or "Done". A need of one is a yes or no, so it only says Done.</summary>
