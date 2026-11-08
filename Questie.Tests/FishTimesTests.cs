@@ -52,3 +52,34 @@ public class FishTimesTests
         Assert.Equal("6am to 11am, 5pm to 2am", FishTimes.FormatWindows(FishTimes.ParseWindows("600 1100 1700 2600")));
     }
 }
+
+public class FishTimesNowTests
+{
+    [Theory]
+    [InlineData(600, true)]
+    [InlineData(1859, true)]
+    [InlineData(1900, false)]
+    [InlineData(500, false)]
+    public void IsOpenFollowsTheWindow(int clock, bool expected)
+    {
+        Assert.Equal(expected, FishTimes.IsOpen(new[] { (600, 1900) }, clock));
+    }
+
+    [Fact]
+    public void NoWindowsMeansAllDay()
+    {
+        Assert.True(FishTimes.IsOpen(Array.Empty<(int, int)>(), 300));
+    }
+
+    [Theory]
+    [InlineData("sunny", false, true)]
+    [InlineData("sunny", true, false)]
+    [InlineData("rainy", true, true)]
+    [InlineData("rainy", false, false)]
+    [InlineData("both", true, true)]
+    [InlineData("both", false, true)]
+    public void WeatherSuitsFollowsTheFishData(string weather, bool raining, bool expected)
+    {
+        Assert.Equal(expected, FishTimes.WeatherSuits(weather, raining));
+    }
+}

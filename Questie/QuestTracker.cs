@@ -12,6 +12,9 @@ namespace Questie
 
         public MarkerPlan Plan { get; } = new();
 
+        /// <summary>The qualified ids of the items the quests want, for the marks on item icons.</summary>
+        public HashSet<string> WantedItems { get; } = new(StringComparer.Ordinal);
+
         public IReadOnlyList<QuestFact> Facts => _facts;
 
         public void Refresh(ModConfig config)
@@ -24,12 +27,14 @@ namespace Questie
             }
 
             QuestReader.Read(player, _facts);
+            ItemNeeds.Collect(_facts, WantedItems);
             Plan.Rebuild(_facts, config, id => player.Items.CountId(id));
         }
 
         public void Clear()
         {
             _facts.Clear();
+            WantedItems.Clear();
             Plan.Rebuild(_facts, new ModConfig { EnableMarkers = false }, _ => 0);
         }
     }

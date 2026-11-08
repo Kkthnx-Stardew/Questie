@@ -27,7 +27,8 @@ namespace Questie
         private static Func<ModConfig>? _config;
         private static GameHintSource? _source;
         private static IMonitor? _monitor;
-        private static bool _failed;
+        private const int MaxLoggedFailures = 3;
+        private static int _failures;
         private static bool _reportedFirstCall;
 
         public static void Apply(IMonitor monitor, Func<ModConfig> config, GameHintSource source)
@@ -59,26 +60,28 @@ namespace Questie
                 _monitor?.Log("The quest log asked for a description, so the notes are in place.", LogLevel.Trace);
             }
 
-            if (_failed || _config is null || _source is null || !Context.IsWorldReady || !_config().ShowHints || __instance.completed.Value)
+            if (_config is null || _source is null || !Context.IsWorldReady || !_config().ShowHints || __instance.completed.Value)
                 return;
 
-            try
+            var cached = Cache.GetOrCreateValue(__instance);
+            if (Game1.ticks - cached.Tick >= RefreshTicks || Game1.ticks < cached.Tick)
             {
-                var cached = Cache.GetOrCreateValue(__instance);
-                if (Game1.ticks - cached.Tick >= RefreshTicks || Game1.ticks < cached.Tick)
+                cached.Tick = Game1.ticks;
+                try
                 {
                     cached.Text = Build(__instance);
-                    cached.Tick = Game1.ticks;
                 }
-                if (cached.Text.Length > 0)
-                    __result = __result + "\n\n" + cached.Text;
+                catch (Exception ex)
+                {
+                    // A quest that does not look the way this expects (a quest or an item from another mod, say) must never break the
+                    // quest log, and must not stop the notes of the other quests. It gets no notes and is tried again in a moment.
+                    cached.Text = "";
+                    if (++_failures <= MaxLoggedFailures)
+                        _monitor?.Log($"Could not add notes to the quest '{__instance.questTitle}'. ({ex.GetType().Name}: {ex.Message})", LogLevel.Warn);
+                }
             }
-            catch (Exception ex)
-            {
-                // a quest from another mod that does not look the way this expects must never break the quest log
-                _failed = true;
-                _monitor?.Log($"Could not add notes to a quest, so notes are off until the game restarts. ({ex.Message})", LogLevel.Error);
-            }
+            if (cached.Text.Length > 0)
+                __result = __result + "\n\n" + cached.Text;
         }
 
         private static string Build(Quest quest)

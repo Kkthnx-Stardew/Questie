@@ -25,6 +25,8 @@
     <Compile Include="..\Questie\FishTimes.cs" Link="FishTimes.cs" />
     <Compile Include="..\Questie\HintBuilder.cs" Link="HintBuilder.cs" />
     <Compile Include="..\Questie\SocializeRepair.cs" Link="SocializeRepair.cs" />
+    <Compile Include="..\Questie\DonationLines.cs" Link="DonationLines.cs" />
+    <Compile Include="..\Questie\ItemNeeds.cs" Link="ItemNeeds.cs" />
   </ItemGroup>
 
 </Project>

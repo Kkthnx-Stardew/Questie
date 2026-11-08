@@ -26,6 +26,10 @@ public class HintBuilderTests
         public string? PlaceName(string internalName) => PlaceDisplay;
         public FishInfo? Fish(string qualifiedItemId) => FishData;
         public RecipeInfo? Recipe(string qualifiedItemId) => RecipeData;
+        public int ClockNow { get; set; } = 1200;
+        public bool RainingNow { get; set; }
+        public List<ShopOffer> Offers = new();
+        public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Offers;
     }
 
     private static readonly string[] None = Array.Empty<string>();
@@ -69,7 +73,7 @@ public class HintBuilderTests
     {
         var fish = new FishInfo(new[] { "Beach", "Ocean" }, false, "6am to 7pm", "rainy");
         var lines = Build(new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 1, 3, None), new Source { FishData = fish });
-        Assert.Equal(new[] { "hint.caught(done=1,total=3)", "hint.fish.places(places=Beach, Ocean)", "hint.fish.time(times=6am to 7pm)", "hint.fish.rainy" }, lines);
+        Assert.Equal(new[] { "hint.caught(done=1,total=3)", "hint.fish.places(places=Beach, Ocean)", "hint.fish.time(times=6am to 7pm)", "hint.fish.rainy", "hint.fish.noweather" }, lines);
     }
 
     [Fact]
@@ -200,6 +204,9 @@ public class HintBuilderOrderTests
         public string? PlaceName(string internalName) => internalName;
         public FishInfo? Fish(string qualifiedItemId) => null;
         public RecipeInfo? Recipe(string qualifiedItemId) => null;
+        public int ClockNow => 1200;
+        public bool RainingNow => false;
+        public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Array.Empty<ShopOffer>();
     }
 
     [Fact]
@@ -215,5 +222,92 @@ public class HintBuilderOrderTests
         var lines = HintBuilder.Build(new QuestFact("2", FactKind.Gather, "Robin", "(O)388", null, 1, 5, Array.Empty<string>()), new ModConfig(), new Source(), new Texts());
         Assert.DoesNotContain("hint.where", lines);
         Assert.Contains("hint.carry", lines);
+    }
+}
+
+public class HintBuilderShopAndClockTests
+{
+    private sealed class Texts : IHintTexts
+    {
+        public string Get(string key, params (string Name, string Value)[] tokens) =>
+            key + (tokens.Length == 0 ? "" : "(" + string.Join(",", tokens.Select(t => $"{t.Name}={t.Value}")) + ")");
+    }
+
+    private sealed class Source : IHintSource
+    {
+        public int Clock = 1200;
+        public bool Raining;
+        public List<ShopOffer> Offers = new();
+        public FishInfo? FishData;
+
+        public string NpcName(string npc) => npc;
+        public string ItemName(string qualifiedItemId) => qualifiedItemId;
+        public int Carried(string qualifiedItemId) => 0;
+        public bool IsHere(string npc) => false;
+        public string? WhereIs(string npc) => null;
+        public string? PlaceName(string internalName) => null;
+        public FishInfo? Fish(string qualifiedItemId) => FishData;
+        public RecipeInfo? Recipe(string qualifiedItemId) => null;
+        public int ClockNow => Clock;
+        public bool RainingNow => Raining;
+        public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => Offers;
+    }
+
+    private static readonly string[] None = Array.Empty<string>();
+
+    private static List<string> Build(QuestFact fact, Source source, ModConfig? config = null) =>
+        HintBuilder.Build(fact, config ?? new ModConfig(), source, new Texts());
+
+    [Fact]
+    public void AShopThatSellsTheItemIsNamedWithItsPrice()
+    {
+        var source = new Source { Offers = { new ShopOffer("Pierre", 120), new ShopOffer("Robin", 0) } };
+        var lines = Build(new QuestFact("1", FactKind.Deliver, null, "(O)245", null, 0, 1, None), source);
+        Assert.Contains("hint.sold(shops=Pierre (120g), Robin)", lines);
+    }
+
+    [Fact]
+    public void OnlyTheFirstThreeShopsAreNamed()
+    {
+        var source = new Source { Offers = { new ShopOffer("A", 1), new ShopOffer("B", 2), new ShopOffer("C", 3), new ShopOffer("D", 4) } };
+        var lines = Build(new QuestFact("1", FactKind.Deliver, null, "(O)245", null, 0, 1, None), source);
+        Assert.Contains("hint.sold(shops=A (1g), B (2g), C (3g))", lines);
+    }
+
+    [Fact]
+    public void ShopsAreSkippedWhenSwitchedOffOrAGatheringQuestIsDone()
+    {
+        var source = new Source { Offers = { new ShopOffer("Pierre", 120) } };
+        Assert.DoesNotContain(Build(new QuestFact("1", FactKind.Deliver, null, "(O)245", null, 0, 1, None), source, new ModConfig { ShowShops = false }), l => l.StartsWith("hint.sold"));
+        Assert.DoesNotContain(Build(new QuestFact("2", FactKind.Gather, "Robin", "(O)388", null, 25, 25, None), source), l => l.StartsWith("hint.sold"));
+    }
+
+    [Fact]
+    public void AFishWithATimeSaysWhetherItBitesNow()
+    {
+        var fish = new FishInfo(new[] { "Beach" }, false, "6am to 7pm", "both", null, new[] { (600, 1900) });
+        var fact = new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 0, 1, None);
+        Assert.Contains("hint.fish.now", Build(fact, new Source { FishData = fish, Clock = 1200 }));
+        Assert.Contains("hint.fish.notime", Build(fact, new Source { FishData = fish, Clock = 2100 }));
+    }
+
+    [Fact]
+    public void AFishThatWantsRainSaysSoWhenItIsDry()
+    {
+        var fish = new FishInfo(new[] { "Town" }, false, null, "rainy");
+        var fact = new QuestFact("3", FactKind.Fish, "Willy", "(O)138", null, 0, 1, None);
+        Assert.Contains("hint.fish.noweather", Build(fact, new Source { FishData = fish, Raining = false }));
+        Assert.Contains("hint.fish.now", Build(fact, new Source { FishData = fish, Raining = true }));
+    }
+
+    [Fact]
+    public void AFishWithNoPreferenceAndACrabPotFishGetNoNowLine()
+    {
+        var plain = new FishInfo(new[] { "Beach" }, false, null, "both");
+        var fact = new QuestFact("3", FactKind.Fish, "Willy", "(O)131", null, 0, 1, None);
+        Assert.DoesNotContain(Build(fact, new Source { FishData = plain }), l => l.StartsWith("hint.fish.now") || l.StartsWith("hint.fish.no"));
+
+        var trap = new FishInfo(Array.Empty<string>(), false, "6am to 7pm", "rainy", "ocean", new[] { (600, 1900) });
+        Assert.DoesNotContain(Build(fact, new Source { FishData = trap, Clock = 2100 }), l => l.StartsWith("hint.fish.no"));
     }
 }

@@ -18,7 +18,9 @@ namespace Questie
         private readonly QuestMarkers _markers = new();
         private FishLookup _fish = null!; // set in Entry
         private RecipeLookup _recipes = null!; // set in Entry
+        private ShopLookup _shops = null!; // set in Entry
         private GameHintSource _source = null!; // set in Entry
+        private DonationPanel _donations = null!; // set in Entry
 
         public override void Entry(IModHelper helper)
         {
@@ -26,8 +28,11 @@ namespace Questie
 
             _fish = new FishLookup(count => helper.Translation.Get("hint.more", new { count }));
             _recipes = new RecipeLookup();
-            _source = new GameHintSource(helper.Translation, _fish, _recipes);
+            _shops = new ShopLookup();
+            _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops);
             QuestHints.Apply(Monitor, () => _config, _source);
+            _donations = new DonationPanel(_source);
+            ItemBadges.Apply(Monitor, () => _config, () => _tracker.Value, _source);
 
             helper.Events.GameLoop.GameLaunched += (_, _) => ConfigMenu.Setup(this, helper, () => _config, OnConfigSaved);
             helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
@@ -37,6 +42,7 @@ namespace Questie
             helper.Events.Player.Warped += (_, e) => { if (e.IsLocalPlayer) Refresh(); };
             helper.Events.Player.InventoryChanged += (_, e) => { if (e.IsLocalPlayer) Refresh(); };
             helper.Events.Display.RenderedWorld += OnRenderedWorld;
+            helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
             helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             helper.Events.Content.LocaleChanged += (_, _) => ForgetLookups();
 
@@ -79,12 +85,12 @@ namespace Questie
         {
             Repair();
             Refresh();
+            WarnExpiring();
         }
 
         private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
         {
             _tracker.Value.Clear();
-            _markers.Forget();
             ForgetLookups();
         }
 
@@ -100,12 +106,18 @@ namespace Questie
                 _markers.Draw(e.SpriteBatch, _tracker.Value, _config);
         }
 
+        private void OnRenderedActiveMenu(object? sender, RenderedActiveMenuEventArgs e)
+        {
+            if (_config.ShowDonations && Context.IsWorldReady)
+                _donations.Draw(e.SpriteBatch);
+        }
+
         private void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
         {
             foreach (var name in e.NamesWithoutLocale)
             {
                 if (name.IsEquivalentTo("Data/Fish") || name.IsEquivalentTo("Data/Locations") || name.IsEquivalentTo("Data/CraftingRecipes")
-                    || name.IsEquivalentTo("Data/CookingRecipes") || name.IsEquivalentTo("Data/Objects"))
+                    || name.IsEquivalentTo("Data/CookingRecipes") || name.IsEquivalentTo("Data/Objects") || name.IsEquivalentTo("Data/Shops"))
                 {
                     ForgetLookups();
                     return;
@@ -119,6 +131,19 @@ namespace Questie
         {
             if (Context.IsWorldReady)
                 _tracker.Value.Refresh(_config);
+        }
+
+        /// <summary>Says so, once as the day starts, for each timed quest whose last day it is. A quest with no days left is already gone.</summary>
+        private void WarnExpiring()
+        {
+            if (!_config.WarnExpiring || !Context.IsWorldReady)
+                return;
+            foreach (var quest in Game1.player.questLog)
+            {
+                if (quest.completed.Value || !quest.IsTimedQuest() || quest.GetDaysLeft() != 1)
+                    continue;
+                Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("message.expiring", new { quest = quest.questTitle }), HUDMessage.newQuest_type));
+            }
         }
 
         private void Repair()
@@ -139,6 +164,7 @@ namespace Questie
         {
             _fish.Reset();
             _recipes.Reset();
+            _shops.Reset();
             QuestHints.Forget();
         }
 

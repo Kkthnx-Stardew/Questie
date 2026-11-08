@@ -50,7 +50,7 @@ namespace Questie
 
             var everywhere = FishesAnywhere(qualifiedItemId);
             var places = everywhere ? new List<string>() : Places(qualifiedItemId);
-            return new FishInfo(places, everywhere, time, weather);
+            return new FishInfo(places, everywhere, time, weather, null, windows);
         }
 
         /// <summary>Whether the game's default list, which every place falls back on, includes the fish.</summary>

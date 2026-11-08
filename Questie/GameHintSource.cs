@@ -9,12 +9,14 @@ namespace Questie
         private readonly ITranslationHelper _i18n;
         private readonly FishLookup _fish;
         private readonly RecipeLookup _recipes;
+        private readonly ShopLookup _shops;
 
-        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes)
+        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes, ShopLookup shops)
         {
             _i18n = i18n;
             _fish = fish;
             _recipes = recipes;
+            _shops = shops;
         }
 
         // ---------------------------------------------------------------- words
@@ -46,6 +48,12 @@ namespace Questie
         public FishInfo? Fish(string qualifiedItemId) => _fish.Find(qualifiedItemId);
 
         public RecipeInfo? Recipe(string qualifiedItemId) => _recipes.Find(qualifiedItemId);
+
+        public int ClockNow => Game1.timeOfDay;
+
+        public bool RainingNow => Game1.currentLocation is { } place && Game1.IsRainingHere(place);
+
+        public IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId) => _shops.Find(qualifiedItemId);
 
         private static string? PlaceDisplay(GameLocation place)
         {

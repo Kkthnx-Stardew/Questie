@@ -41,6 +41,7 @@ namespace Questie
     /// <param name="Need">How much it asks for in all.</param>
     /// <param name="Remaining">For Socialize, the villagers still to greet. Empty otherwise.</param>
     /// <param name="Place">For a lost item that is not found yet, the internal name of the place it lies in, or null.</param>
+    /// <param name="Title">The quest's title as the quest log shows it, or null.</param>
     public sealed record QuestFact(
         string Id,
         FactKind Kind,
@@ -50,7 +51,8 @@ namespace Questie
         int Have,
         int Need,
         IReadOnlyList<string> Remaining,
-        string? Place = null)
+        string? Place = null,
+        string? Title = null)
     {
         /// <summary>Whether the counted part of the quest is finished, so only the hand-in is left.</summary>
         public bool CountDone => Need > 0 && Have >= Need;

@@ -2,7 +2,7 @@
     "Name": "Questie",
     "Author": "Kkthnx",
     "Version": "%ProjectVersion%",
-    "Description": "Marks the people and monsters your quests need, and adds progress, where to fish, recipes and who is left to meet to the quest log.",
+    "Description": "Marks the people, monsters and items your quests need, and adds progress, where to fish, recipes and who is left to meet to the quest log.",
     "UniqueID": "Kkthnx.Questie",
     "EntryDll": "Questie.dll",
     "MinimumApiVersion": "4.2.1",

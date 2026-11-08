@@ -27,11 +27,23 @@ namespace Questie
         /// <summary>For a fishing quest, say where, when and in what weather the fish bites.</summary>
         public bool ShowFishInfo { get; set; } = true;
 
+        /// <summary>For a delivery or gathering quest, say which shops sell the item.</summary>
+        public bool ShowShops { get; set; } = true;
+
         /// <summary>For a quest about an item, say how to craft or cook it, and whether the recipe is known.</summary>
         public bool ShowRecipes { get; set; } = true;
 
         /// <summary>Say where a quest's person is right now.</summary>
         public bool ShowWhereIsNpc { get; set; } = true;
+
+        /// <summary>Mark the items a quest wants with a small exclamation mark in the backpack, chests and toolbar, and say why in the tooltip.</summary>
+        public bool ShowItemMarks { get; set; } = true;
+
+        /// <summary>Beside a special order donation box, list what the order still needs.</summary>
+        public bool ShowDonations { get; set; } = true;
+
+        /// <summary>On the last day of a timed quest, such as a Help Wanted request, show a short message when the day starts.</summary>
+        public bool WarnExpiring { get; set; } = true;
 
         /// <summary>On loading a save, drop people from a Socialize quest who no longer exist, so the quest can be finished.</summary>
         public bool FixSocializeQuests { get; set; } = true;

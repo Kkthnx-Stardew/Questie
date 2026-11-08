@@ -30,8 +30,12 @@ namespace Questie
             menu.AddSectionTitle(manifest, () => t.Get("gmcm.log"));
             Toggle(menu, manifest, t, "hints", () => config().ShowHints, v => config().ShowHints = v);
             Toggle(menu, manifest, t, "fish", () => config().ShowFishInfo, v => config().ShowFishInfo = v);
+            Toggle(menu, manifest, t, "shops", () => config().ShowShops, v => config().ShowShops = v);
             Toggle(menu, manifest, t, "recipes", () => config().ShowRecipes, v => config().ShowRecipes = v);
             Toggle(menu, manifest, t, "where", () => config().ShowWhereIsNpc, v => config().ShowWhereIsNpc = v);
+            Toggle(menu, manifest, t, "itemmarks", () => config().ShowItemMarks, v => config().ShowItemMarks = v);
+            Toggle(menu, manifest, t, "donations", () => config().ShowDonations, v => config().ShowDonations = v);
+            Toggle(menu, manifest, t, "expiring", () => config().WarnExpiring, v => config().WarnExpiring = v);
             Toggle(menu, manifest, t, "fix", () => config().FixSocializeQuests, v => config().FixSocializeQuests = v);
         }
 

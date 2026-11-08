@@ -1,6 +1,8 @@
 # Questie
 
-A quest helper for Stardew Valley. It marks the people and monsters your quests need, and adds progress, where to fish, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
+A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
+
+This is a beta (0.9.0-beta.1). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -17,14 +19,25 @@ A quest helper for Stardew Valley. It marks the people and monsters your quests 
 **Notes in the journal.** Lines are added to the end of a quest's description, so nothing the game says is replaced.
 
 - Progress such as "Caught 1 of 3", "Slain 2 of 5" or "Greeted 2 of 28", and how many you carry of what a delivery or gathering quest needs.
-- For a fishing quest, where the fish bites, in which seasons, at what times of day and in what weather. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
-- For an item quest, how to make the item and whether you know the recipe. When you do not, it says how to learn it, such as at 3 hearts with Emily or at Foraging level 6.
+- For a fishing quest, where the fish bites, in which seasons, at what times of day and in what weather, and whether it can be caught right now. A crab pot fish says which water. This is read from the game's own fish and location data, so it also covers fish and places added by other mods.
+- For a delivery or gathering quest, which shops sell the item and for how much.
+- For an item quest, how to make the item and whether you know the recipe. When you know it, each ingredient shows how many you carry, such as "Egg (2 of 1)". When you do not, it says how to learn it, such as at 3 hearts with Emily or at Foraging level 6.
 - Who is left to meet in a meeting quest, and where a person is right now (or that they are here).
 - Where a lost item lies, until you find it.
 
 ![A fishing quest with notes](docs/images/log-fishing.png)
 
 ![A meeting quest with notes](docs/images/log-meeting.png)
+
+**Marks on items.** An item a quest wants gets the game's own quest exclamation mark in the top left corner of its slot, in your backpack, in chests and on the toolbar, the way the quality star sits in the bottom left. Hover over it and the tooltip says which quest wants it and what to do. A delivery item is marked until you hand it in. A fish or a resource is marked until you have caught or gathered enough.
+
+![Quest items marked in the backpack, with the tooltip](docs/images/item-marks.png)
+
+**Donation boxes.** A special order that takes donations, such as the eggs for Gus, shows what it asks for and how far you have come beside the box while it is open, so you do not have to close the box and open the journal to find out. The game keeps the count up to date as items go in and come out.
+
+![A donation box with the order's list](docs/images/donation-box.png)
+
+**A warning on the last day.** When a timed quest, such as a Help Wanted request, is on its last day, a message tells you as the day starts.
 
 **A meeting quest that can be finished.** Introductions lists the villagers who exist when it starts. If a mod removes one of them, the quest can never be completed, and if a mod adds one, the quest never asks for them. When a save loads, Questie takes people who no longer exist off the list and adds sociable villagers you have not met, using the game's own rule for who counts.
 
@@ -58,8 +71,12 @@ Everything is on by default. Edit `config.json` after the first run, or use Gene
 | `MarkMonsters` | Mark the monsters a kill quest asks for. |
 | `ShowHints` | Add notes to the end of quests in the journal. |
 | `ShowFishInfo` | Say where, when and in what weather a fish bites. |
+| `ShowShops` | Say which shops sell the item a quest wants. |
 | `ShowRecipes` | Say how to craft or cook an item, and how to learn the recipe. |
 | `ShowWhereIsNpc` | Say where a quest's person is right now. |
+| `ShowItemMarks` | Mark the items a quest wants with an exclamation mark, and add a line to their tooltip. |
+| `ShowDonations` | List what a special order asks for beside its donation box. |
+| `WarnExpiring` | Show a message on the last day of a timed quest. |
 | `FixSocializeQuests` | Repair a saved meeting quest when the villagers change. |
 
 ## Console command
@@ -68,13 +85,14 @@ Everything is on by default. Edit `config.json` after the first run, or use Gene
 
 ## Performance
 
-Markers are worked out when something changes and twice a second, and drawn from a lookup, so a frame does no searching. Measured in the game with five quests, working out the markers takes about a microsecond and asking for a quest's notes about a twentieth of a microsecond. The notes themselves are rebuilt at most three times a second for the quest on screen. More in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+Markers are worked out when something changes and twice a second, and drawn from a lookup, so a frame does no searching. The item marks cost one set lookup for each slot on screen. Measured in the game with five quests, working out the markers takes about a microsecond and asking for a quest's notes about a twentieth of a microsecond. The notes themselves are rebuilt at most three times a second for the quest on screen. More in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Limits
 
 - It is tested on Stardew Valley 1.6.15 with SMAPI 4.5.2, alone and with one host and one joining player on one computer. Three or more players, split screen and play over the internet are untested.
 - The notes are in English. The translation file is `i18n/default.json`, and other languages can be added the usual way.
-- Special orders are not quests in the game's code and are left as they are.
+- Special orders are not quests in the game's code. Their donation boxes get the list above, but their items are not marked in the backpack and they have no markers or notes in the journal.
+- Fish seasons come from the game's location list. A fish that a mod limits to a season in some other way may be listed for more seasons than it bites in.
 - Quest kinds from other mods that are not one of the game's own are left alone.
 
 ## How it was made

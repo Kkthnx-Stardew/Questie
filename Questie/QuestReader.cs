@@ -26,7 +26,9 @@ namespace Questie
         }
 
         /// <summary>The fact for one quest, or null when it is finished or not a kind the mod knows.</summary>
-        public static QuestFact? ToFact(Quest quest)
+        public static QuestFact? ToFact(Quest quest) => Build(quest) is { } fact ? fact with { Title = quest.questTitle } : null;
+
+        private static QuestFact? Build(Quest quest)
         {
             if (quest.completed.Value)
                 return null;

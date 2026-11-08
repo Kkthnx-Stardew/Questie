@@ -61,14 +61,25 @@ namespace Questie
         {
             var list = new List<string>();
             var recipe = new CraftingRecipe(entry.Name, entry.Cooking);
+            var items = Game1.player.Items;
             foreach (var (id, count) in recipe.recipeList)
             {
-                string label;
+                // the game names an ingredient itself, including a whole category such as any egg or any fish
+                var label = recipe.getNameFromIndex(id);
+                int have;
                 if (int.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out var category) && category < 0)
-                    label = StardewValley.Object.GetCategoryDisplayName(category);
+                {
+                    // a category is counted by what an item is. The game's -777 stands for seasonal wild seeds and is not counted here.
+                    have = 0;
+                    for (var i = 0; i < items.Count; i++)
+                    {
+                        if (items[i] is { } item && item.Category == category)
+                            have += item.Stack;
+                    }
+                }
                 else
-                    label = ItemRegistry.GetDataOrErrorItem(ItemRegistry.QualifyItemId(id) ?? id).DisplayName;
-                list.Add(count > 1 ? $"{label} x{count}" : label);
+                    have = items.CountId(ItemRegistry.QualifyItemId(id) ?? id);
+                list.Add($"{label} ({have} of {count})");
             }
             return list;
         }

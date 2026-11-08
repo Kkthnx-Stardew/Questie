@@ -94,7 +94,7 @@ public class ShippedFilesTests
             "hint.slain", "hint.caught", "hint.collected", "hint.greeted", "hint.carry", "hint.return", "hint.where", "hint.fish.places",
             "hint.fish.time", "hint.fish.sunny", "hint.fish.rainy", "hint.craft.known", "hint.craft.unknown", "hint.cook.known",
             "hint.cook.unknown", "hint.left", "hint.more", "hint.here", "hint.lost", "hint.fish.trap", "hint.fish.everywhere",
-            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go",
+            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "gmcm.donations.name", "gmcm.donations.tip",
         };
         foreach (var key in asked)
             Assert.Contains(key, keys);
@@ -112,5 +112,40 @@ public class ShippedFilesTests
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(file));
         return doc.RootElement.EnumerateObject().Select(p => p.Name).ToHashSet();
+    }
+}
+
+public class DonationLinesTests
+{
+    private sealed class Texts : IHintTexts
+    {
+        public string Get(string key, params (string Name, string Value)[] tokens) => key + ":" + string.Join(",", tokens.Select(t => t.Name + "=" + t.Value));
+    }
+
+    [Fact]
+    public void ShowsWhatIsLeft()
+    {
+        Assert.Equal("donate.progress:have=12,need=40,left=28", DonationLines.Progress(new DonationNeed("Amethyst", 12, 40), new Texts()));
+    }
+
+    [Fact]
+    public void SaysDoneWhenEnoughIsIn()
+    {
+        Assert.Equal("donate.done:", DonationLines.Progress(new DonationNeed("Amethyst", 40, 40), new Texts()));
+    }
+
+    [Fact]
+    public void AYesOrNoNeedSaysNothingUntilDone()
+    {
+        Assert.Equal("", DonationLines.Progress(new DonationNeed("Gem", 0, 1), new Texts()));
+        Assert.Equal("donate.done:", DonationLines.Progress(new DonationNeed("Gem", 1, 1), new Texts()));
+    }
+
+    [Fact]
+    public void AStepWithoutACountSaysNothing()
+    {
+        var step = new DonationNeed("Gather 24 eggs.", 0, 24, false);
+        Assert.Equal("", DonationLines.Progress(step, new Texts()));
+        Assert.False(step.Done);
     }
 }

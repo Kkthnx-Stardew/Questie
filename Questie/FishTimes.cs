@@ -43,5 +43,26 @@ namespace Questie
         /// <summary>The windows as text, such as "6am to 7pm" or "6am to 11am, 5pm to 2am".</summary>
         public static string FormatWindows(IReadOnlyList<(int Start, int End)> windows, Func<int, string>? format = null) =>
             string.Join(", ", windows.Select(w => $"{(format ?? FormatTime)(w.Start)} to {(format ?? FormatTime)(w.End)}"));
+
+        /// <summary>Whether a time of day falls inside any of the windows. No windows means the fish bites all day.</summary>
+        public static bool IsOpen(IReadOnlyList<(int Start, int End)> windows, int clock)
+        {
+            if (windows.Count == 0)
+                return true;
+            foreach (var (start, end) in windows)
+            {
+                if (clock >= start && clock < end)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Whether the weather suits a fish. "sunny" wants no rain, "rainy" wants rain, and anything else suits both.</summary>
+        public static bool WeatherSuits(string weather, bool raining) => weather switch
+        {
+            "sunny" => !raining,
+            "rainy" => raining,
+            _ => true,
+        };
     }
 }

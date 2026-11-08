@@ -12,7 +12,11 @@ namespace Questie
     /// <param name="Time">The times of day as text, or null when it bites all day.</param>
     /// <param name="Weather">"sunny", "rainy" or "both".</param>
     /// <param name="TrapWater">For a fish that is caught in a crab pot, "freshwater" or "ocean". Null for a fish that is caught with a rod.</param>
-    public sealed record FishInfo(IReadOnlyList<string> Places, bool Everywhere, string? Time, string Weather, string? TrapWater = null);
+    /// <param name="Windows">The clock windows the fish bites in, used to say whether it bites now. Null or empty means all day.</param>
+    public sealed record FishInfo(IReadOnlyList<string> Places, bool Everywhere, string? Time, string Weather, string? TrapWater = null, IReadOnlyList<(int Start, int End)>? Windows = null);
+
+    /// <summary>A shop that sells an item. The price is 0 or less when the shop data does not state one. Sometimes is true when the shop only stocks it under a condition, such as a season.</summary>
+    public sealed record ShopOffer(string Seller, int Price, bool Sometimes = false);
 
     /// <summary>Why a recipe is not known yet.</summary>
     public enum UnlockKind
@@ -57,6 +61,15 @@ namespace Questie
         string? PlaceName(string internalName);
 
         FishInfo? Fish(string qualifiedItemId);
+
+        /// <summary>The time of day on the game clock, such as 1830. Past 2400 counts as the small hours.</summary>
+        int ClockNow { get; }
+
+        /// <summary>Whether it is raining where the farmer is.</summary>
+        bool RainingNow { get; }
+
+        /// <summary>The shops that sell an item for gold, best known first.</summary>
+        IReadOnlyList<ShopOffer> ShopsFor(string qualifiedItemId);
         RecipeInfo? Recipe(string qualifiedItemId);
     }
 
@@ -76,6 +89,7 @@ namespace Questie
             {
                 case FactKind.Deliver:
                     AddCarry(lines, fact, source, text);
+                    AddShops(lines, fact, config, source, text);
                     AddRecipe(lines, fact, config, source, text);
                     AddWhere(lines, fact.Npc, config, source, text);
                     break;
@@ -100,6 +114,7 @@ namespace Questie
                     else
                     {
                         AddCarry(lines, fact, source, text);
+                        AddShops(lines, fact, config, source, text);
                         AddRecipe(lines, fact, config, source, text);
                     }
                     break;
@@ -178,6 +193,35 @@ namespace Questie
                 lines.Add(text.Get("hint.fish.time", ("times", fish.Time)));
             if (fish.Weather is "sunny" or "rainy")
                 lines.Add(text.Get(fish.Weather == "sunny" ? "hint.fish.sunny" : "hint.fish.rainy"));
+
+            // Whether it bites right now is only worth a line for a fish that has a time or a weather it cares about.
+            var picky = !string.IsNullOrEmpty(fish.Time) || fish.Weather is "sunny" or "rainy";
+            if (fish.TrapWater is null && picky)
+            {
+                var timeOk = FishTimes.IsOpen(fish.Windows ?? Array.Empty<(int, int)>(), source.ClockNow);
+                var weatherOk = FishTimes.WeatherSuits(fish.Weather, source.RainingNow);
+                lines.Add(text.Get(timeOk && weatherOk ? "hint.fish.now" : !timeOk ? "hint.fish.notime" : "hint.fish.noweather"));
+            }
+        }
+
+        /// <summary>The most shops named for one item.</summary>
+        public const int MaxShops = 3;
+
+        private static string Describe(ShopOffer offer, IHintTexts text)
+        {
+            var name = offer.Price > 0 ? $"{offer.Seller} ({offer.Price}g)" : offer.Seller;
+            return offer.Sometimes ? text.Get("hint.sold.sometimes", ("shop", name)) : name;
+        }
+
+        private static void AddShops(List<string> lines, QuestFact fact, ModConfig config, IHintSource source, IHintTexts text)
+        {
+            if (!config.ShowShops || fact.ItemId is null)
+                return;
+            var offers = source.ShopsFor(fact.ItemId);
+            if (offers.Count == 0)
+                return;
+            var names = offers.Take(MaxShops).Select(o => Describe(o, text));
+            lines.Add(text.Get("hint.sold", ("shops", string.Join(", ", names))));
         }
 
         private static void AddRecipe(List<string> lines, QuestFact fact, ModConfig config, IHintSource source, IHintTexts text)
