@@ -93,8 +93,8 @@ namespace Questie
         }
 
         /// <summary>The windows as text, such as "6am to 7pm" or "6am to 11am, 5pm to 2am".</summary>
-        public static string FormatWindows(IReadOnlyList<(int Start, int End)> windows, Func<int, string>? format = null) =>
-            string.Join(", ", windows.Select(w => $"{(format ?? FormatTime)(w.Start)} to {(format ?? FormatTime)(w.End)}"));
+        public static string FormatWindows(IReadOnlyList<(int Start, int End)> windows, Func<int, string>? format = null, Func<string, string, string>? range = null) =>
+            string.Join(", ", windows.Select(w => (range ?? ((from, to) => $"{from} to {to}"))((format ?? FormatTime)(w.Start), (format ?? FormatTime)(w.End))));
 
         /// <summary>Whether a time of day falls inside any of the windows. No windows means the fish bites all day.</summary>
         public static bool IsOpen(IReadOnlyList<(int Start, int End)> windows, int clock)

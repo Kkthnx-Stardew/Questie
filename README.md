@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.4). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.5). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 

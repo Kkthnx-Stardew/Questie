@@ -2,6 +2,11 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.5 (2026-11-08)
+
+- "Where to buy" no longer lists festival stalls, which are open for a day and showed up as names such as "Festival Night Market Magic Boat Day1". A shop that always stocks the item is named before one that only stocks it at times.
+- The words around a shop price, an ingredient count and a time range, "(120g)", "(2 of 1)" and "6am to 1pm", are now in the translation file, so a translation can word them its own way.
+
 ## 0.9.0-beta.4 (2026-11-08)
 
 - Fishing quests now say which seasons the fish bites in, such as "Bites in spring and summer.", and say "It is not in season now." when it is the wrong season, instead of a right now line that could not be true. The seasons come from the season rules of each place, including the ones written as conditions, because those are what the game catches fish by. Before, only the places with a plain season field were read, so most fish showed no season at all.

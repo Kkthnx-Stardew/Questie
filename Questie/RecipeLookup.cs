@@ -6,6 +6,11 @@ namespace Questie
     /// <summary>Finds how an item is crafted or cooked, from the game's own recipe data.</summary>
     internal sealed class RecipeLookup
     {
+        private readonly Func<string, string, string, string> _ingredient;
+
+        /// <param name="ingredient">Builds the text of one ingredient from its name, how many are carried and how many are needed.</param>
+        public RecipeLookup(Func<string, string, string, string> ingredient) => _ingredient = ingredient;
+
         private readonly record struct Entry(string Name, bool Cooking, string? Unlock);
 
         /// <summary>The recipe that makes each item, by the item's qualified id. Built the first time it is needed.</summary>
@@ -57,7 +62,7 @@ namespace Questie
             }
         }
 
-        private static List<string> Ingredients(Entry entry)
+        private List<string> Ingredients(Entry entry)
         {
             var list = new List<string>();
             var recipe = new CraftingRecipe(entry.Name, entry.Cooking);
@@ -79,7 +84,7 @@ namespace Questie
                 }
                 else
                     have = items.CountId(ItemRegistry.QualifyItemId(id) ?? id);
-                list.Add($"{label} ({have} of {count})");
+                list.Add(_ingredient(label, have.ToString(), count.ToString()));
             }
             return list;
         }

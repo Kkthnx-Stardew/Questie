@@ -289,7 +289,7 @@ namespace Questie
 
         private static string Describe(ShopOffer offer, IHintTexts text)
         {
-            var name = offer.Price > 0 ? $"{offer.Seller} ({offer.Price}g)" : offer.Seller;
+            var name = offer.Price > 0 ? text.Get("hint.price", ("shop", offer.Seller), ("price", offer.Price.ToString())) : offer.Seller;
             return offer.Sometimes ? text.Get("hint.sold.sometimes", ("shop", name)) : name;
         }
 

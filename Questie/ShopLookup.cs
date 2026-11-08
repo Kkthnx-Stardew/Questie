@@ -28,6 +28,10 @@ namespace Questie
                 if (shop.Currency != 0 || shop.Items is null)
                     continue;
 
+                // a festival's stalls are open for a day and never a place to go and buy, and they carry their festival's name
+                if (shopId.Contains("Festival", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 var seller = Seller(shopId, shop);
                 foreach (var item in shop.Items)
                 {
@@ -43,6 +47,10 @@ namespace Questie
                         offers.Add(new ShopOffer(seller, item.Price > 0 ? item.Price : 0, !string.IsNullOrWhiteSpace(item.Condition)));
                 }
             }
+
+            // a shop that always stocks the item is named before one that only does at times
+            foreach (var key in index.Keys.ToList())
+                index[key] = index[key].OrderBy(o => o.Sometimes).ToList();
             return index;
         }
 

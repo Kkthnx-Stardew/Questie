@@ -12,11 +12,14 @@ namespace Questie
 
         private readonly Dictionary<string, FishInfo?> _cache = new(StringComparer.Ordinal);
         private readonly Func<string, string> _more;
+        private readonly Func<string, string, string> _range;
 
         /// <param name="more">Builds the "and 3 more" text for the places that did not fit.</param>
-        public FishLookup(Func<string, string> more)
+        /// <param name="range">Builds "6am to 1pm" from the two times.</param>
+        public FishLookup(Func<string, string> more, Func<string, string, string> range)
         {
             _more = more;
+            _range = range;
         }
 
         /// <summary>Forgets what was worked out. Called when the data or the language changes.</summary>
@@ -45,7 +48,7 @@ namespace Questie
                 return new FishInfo(Array.Empty<string>(), false, null, "both", fields[4]);
 
             var windows = FishTimes.ParseWindows(fields.Length > 5 ? fields[5] : null);
-            var time = windows.Count == 0 || FishTimes.IsAllDay(windows) ? null : FishTimes.FormatWindows(windows, Game1.getTimeOfDayString);
+            var time = windows.Count == 0 || FishTimes.IsAllDay(windows) ? null : FishTimes.FormatWindows(windows, Game1.getTimeOfDayString, _range);
             var weather = fields.Length > 7 ? fields[7] : "both";
 
             var rules = RulesFor(qualifiedItemId, out var defaultRule);

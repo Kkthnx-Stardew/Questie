@@ -27,8 +27,8 @@ namespace Questie
         {
             _config = LoadConfig(helper);
 
-            _fish = new FishLookup(count => helper.Translation.Get("hint.more", new { count }));
-            _recipes = new RecipeLookup();
+            _fish = new FishLookup(count => helper.Translation.Get("hint.more", new { count }), (start, end) => helper.Translation.Get("hint.time.range", new { start, end }));
+            _recipes = new RecipeLookup((item, have, need) => helper.Translation.Get("hint.ingredient", new { item, have, need }));
             _shops = new ShopLookup();
             _chests = new ChestLookup();
             _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops, _chests);

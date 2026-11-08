@@ -333,7 +333,7 @@ public class HintBuilderShopAndClockTests
     {
         var source = new Source { Offers = { new ShopOffer("Pierre", 120), new ShopOffer("Robin", 0) } };
         var lines = Build(new QuestFact("1", FactKind.Deliver, null, "(O)245", null, 0, 1, None), source);
-        Assert.Contains("hint.sold(shops=Pierre (120g), Robin)", lines);
+        Assert.Contains("hint.sold(shops=hint.price(shop=Pierre,price=120), Robin)", lines);
     }
 
     [Fact]
@@ -341,7 +341,7 @@ public class HintBuilderShopAndClockTests
     {
         var source = new Source { Offers = { new ShopOffer("A", 1), new ShopOffer("B", 2), new ShopOffer("C", 3), new ShopOffer("D", 4) } };
         var lines = Build(new QuestFact("1", FactKind.Deliver, null, "(O)245", null, 0, 1, None), source);
-        Assert.Contains("hint.sold(shops=A (1g), B (2g), C (3g))", lines);
+        Assert.Contains("hint.sold(shops=hint.price(shop=A,price=1), hint.price(shop=B,price=2), hint.price(shop=C,price=3))", lines);
     }
 
     [Fact]
