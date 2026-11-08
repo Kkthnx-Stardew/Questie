@@ -1,0 +1,29 @@
+name: Bug report
+description: A marker or a note is wrong, missing or throws an error
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you saw instead. Say which quest it was about.
+    validations:
+      required: true
+  - type: input
+    id: log
+    attributes:
+      label: SMAPI log
+      description: Upload your log at https://smapi.io/log and paste the link. It shows your versions and every mod you run.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Questie report
+      description: Type `questie_report` in the SMAPI console and paste what it prints. It lists your quests, the notes Questie adds and who it marks. Nothing is sent anywhere.
+      render: text
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods that might matter
+      description: Anything that adds quests, villagers, fish or locations, or changes the quest log.
