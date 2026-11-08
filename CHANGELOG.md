@@ -2,6 +2,10 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
+## 0.9.0-beta.7 (2026-11-08)
+
+- Questie has a page on Nexus Mods, and the manifest lists it for update checks, so SMAPI can tell you when a new version is out. Nothing else changed from beta.6.
+
 ## 0.9.0-beta.6 (2026-11-08)
 
 - Special orders. An item that fits an order that asks you to deliver, donate or ship items now gets the quest mark in the backpack, in chests and on the toolbar, and its tooltip says which order wants it and what to do with it. Orders ask for items by tag, such as any vegetable, so the game's own rule decides which items fit. The journal page of such an order says how many you carry that fit and where to take them, the person for a delivery, the place of the donation box, or the shipping bin, and that a delivery has to be handed over in one stack. The person a delivery order is for gets the hand-in marker while you carry a stack big enough, and the monsters of a kill order get the skull.

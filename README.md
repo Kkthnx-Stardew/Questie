@@ -2,7 +2,7 @@
 
 A quest helper for Stardew Valley. It marks the people and monsters your quests need, marks the items in your backpack that a quest wants, and adds progress, where to fish, where to buy, how to make an item and who you still have to meet to the end of each quest in your journal. It uses the game's own pictures and words, so it looks like part of the game.
 
-This is a beta (0.9.0-beta.6). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
+This is a beta (0.9.0-beta.7). It works and has been tested in the game, but it has had few players, so please report anything odd. Version 1.0 is kept for the first full release.
 
 ![Markers over people and monsters](docs/images/markers.png)
 
@@ -61,7 +61,7 @@ Quests belong to each player, so markers and notes follow your own journal. In t
 ## Install
 
 1. Install [SMAPI](https://smapi.io/).
-2. Download the zip from the [Releases page](https://github.com/Kkthnx-Stardew/Questie/releases) and unzip it into your `Mods` folder.
+2. Download the zip from the [Nexus Mods page](https://www.nexusmods.com/stardewvalley/mods/55257) or the [Releases page](https://github.com/Kkthnx-Stardew/Questie/releases) and unzip it into your `Mods` folder.
 3. Run the game through SMAPI.
 
 Stardew Valley 1.6.9 or newer. [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) is optional and gives you the settings in the game.

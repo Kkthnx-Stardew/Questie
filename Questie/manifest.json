@@ -7,6 +7,7 @@
     "EntryDll": "Questie.dll",
     "MinimumApiVersion": "4.2.1",
     "MinimumGameVersion": "1.6.9",
+    "UpdateKeys": [ "Nexus:55257" ],
     "Dependencies": [
         {
             "UniqueID": "spacechase0.GenericModConfigMenu",

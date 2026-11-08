@@ -83,6 +83,8 @@ public class ShippedFilesTests
         Assert.Equal("Questie.dll", root.GetProperty("EntryDll").GetString());
         Assert.Equal("%ProjectVersion%", root.GetProperty("Version").GetString());
         Assert.True(Version.TryParse(root.GetProperty("MinimumGameVersion").GetString(), out var min) && min >= new Version(1, 6, 9));
+        // SMAPI tells players about updates through this key, so it must name the Nexus page
+        Assert.Contains("Nexus:55257", root.GetProperty("UpdateKeys").EnumerateArray().Select(k => k.GetString()));
     }
 
     [Fact]
