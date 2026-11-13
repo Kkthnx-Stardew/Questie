@@ -20,7 +20,7 @@ It was read to learn what players get from it, not how it is built. In plain ter
 | --- | --- | --- |
 | Finding what to mark | Looks through every quest for every villager on every frame | Works the markers out when quests or the backpack change and twice a second, and draws from a lookup |
 | Marker look | One small marker | Three, from the game's emote bubbles and stat icons, with the item beside a delivery |
-| Quests covered | Delivery, fishing, kill, gathering, meeting, lost item, and two story quests by id | Also crafting, go-to-a-place, building and harvest notes, depth in the mines and Skull Cavern, seven story quests that bring an item, and the slime quest that counts every slime |
+| Quests covered | Delivery, fishing, kill, gathering, meeting, lost item, and two story quests by id | Also crafting, go-to-a-place, building and harvest notes, depth in the mines and Skull Cavern, eleven plain story quests with an item, eight helped by a line of their own, and the slime quest that counts every slime |
 | Recipes | Says whether a recipe is known | Also says how to learn it, in hearts or skill levels |
 | Fish | Where, hours and weather | Also the seasons the fish bites in, taken from the location rules the game catches fish by, whether it bites right now, crab pot water, readable names for places with no display name, and no festival or minigame places |
 | Where is a person | No | Yes, and "is here" when they are in the same place |
