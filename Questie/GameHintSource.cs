@@ -11,14 +11,22 @@ namespace Questie
         private readonly RecipeLookup _recipes;
         private readonly ShopLookup _shops;
         private readonly ChestLookup _chests;
+        private readonly GrowLookup _grow;
+        private readonly ForageLookup _forage;
+        private readonly MonsterDropLookup _drops;
+        private readonly MachineLookup _machines;
 
-        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes, ShopLookup shops, ChestLookup chests)
+        public GameHintSource(ITranslationHelper i18n, FishLookup fish, RecipeLookup recipes, ShopLookup shops, ChestLookup chests, GrowLookup grow, ForageLookup forage, MonsterDropLookup drops, MachineLookup machines)
         {
+            _machines = machines;
             _i18n = i18n;
             _fish = fish;
             _recipes = recipes;
             _shops = shops;
             _chests = chests;
+            _grow = grow;
+            _forage = forage;
+            _drops = drops;
         }
 
         // ---------------------------------------------------------------- words
@@ -52,7 +60,19 @@ namespace Questie
 
         public FishInfo? Fish(string qualifiedItemId) => _fish.Find(qualifiedItemId);
 
+        public GrowInfo? Grow(string qualifiedItemId) => _grow.Find(qualifiedItemId);
+
+        public GrowInfo? GrowForTag(string tag) => _grow.FindByTag(tag);
+
+        public ForageInfo? Forage(string qualifiedItemId) => _forage.Find(qualifiedItemId);
+
+        public DropInfo? Drop(string qualifiedItemId) => _drops.Find(qualifiedItemId);
+
         public RecipeInfo? Recipe(string qualifiedItemId) => _recipes.Find(qualifiedItemId);
+
+        public IReadOnlyList<string> WhereMonster(string monster) => MonsterPlaces.For(null, monster);
+
+        public IReadOnlyList<MadeWay> MadeIn(string qualifiedItemId) => _machines.Find(qualifiedItemId);
 
         public int ClockNow => Game1.timeOfDay;
 
@@ -82,7 +102,8 @@ namespace Questie
         private static string? PlaceDisplay(GameLocation place)
         {
             var name = place.GetDisplayName();
-            return string.IsNullOrWhiteSpace(name) ? place.Name : name;
+            // a place with no display name is shown by its internal name made readable, so IslandNorth is not shown as it is written
+            return string.IsNullOrWhiteSpace(name) ? NameText.Humanize(place.Name) : name;
         }
     }
 }

@@ -12,6 +12,10 @@ public class ItemNeedsTests
         public string? WhereIs(string npc) => null;
         public string? PlaceName(string internalName) => internalName;
         public FishInfo? Fish(string qualifiedItemId) => null;
+        public GrowInfo? Grow(string qualifiedItemId) => null;
+        public GrowInfo? GrowForTag(string tag) => null;
+        public ForageInfo? Forage(string qualifiedItemId) => null;
+        public DropInfo? Drop(string qualifiedItemId) => null;
         public RecipeInfo? Recipe(string qualifiedItemId) => null;
         public int ClockNow => 1200;
         public bool RainingNow => false;
@@ -87,5 +91,27 @@ public class ItemNeedsTests
     public void OtherItemsGetNoNotes()
     {
         Assert.Empty(ItemNeeds.Notes("(O)99", new[] { Fact(FactKind.Deliver, "(O)24") }, new Source(), new Texts()));
+    }
+
+    [Fact]
+    public void ATradeItemSaysWhoItIsFor()
+    {
+        var fact = new QuestFact("130", FactKind.Bring, "Kent", "(O)864", null, 0, 1, None, null, "The Pirate's Wife", "(O)865", true);
+        Assert.Equal(new[] { "note.trade(quest=The Pirate's Wife,npc=KENT)" }, ItemNeeds.Notes("(O)864", new[] { fact }, new Source(), new Texts()));
+    }
+
+    [Fact]
+    public void TheLastTradeItemSaysToTakeItBack()
+    {
+        var fact = new QuestFact("130", FactKind.Bring, "Birdie", "(O)870", null, 0, 1, None, null, "The Pirate's Wife", null, true);
+        Assert.Equal(new[] { "note.trade.finish(quest=The Pirate's Wife,npc=BIRDIE)" }, ItemNeeds.Notes("(O)870", new[] { fact }, new Source(), new Texts()));
+    }
+
+    [Fact]
+    public void AStoryItemIsWantedAndNamesItsQuest()
+    {
+        var fact = new QuestFact("q", FactKind.StoryItem, null, "(O)145", null, 0, 1, None, null, "The Elixir");
+        Assert.True(ItemNeeds.Wants(fact));
+        Assert.Equal(new[] { "note.story(quest=The Elixir)" }, ItemNeeds.Notes("(O)145", new[] { fact }, new Source(), new Texts()));
     }
 }

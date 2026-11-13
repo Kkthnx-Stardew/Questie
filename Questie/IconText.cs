@@ -41,7 +41,8 @@ namespace Questie
 
         /// <summary>
         /// Wraps the text to a width and leaves room in front of each marked name for its picture, so no line is longer than the width
-        /// and a name stays whole on one line. Lines the text already breaks into stay as they are.
+        /// and a name stays whole on one line. Lines the text already breaks into stay as they are, and a line that starts with a dash
+        /// and a space is a bullet whose wrapped lines are indented to sit under its text.
         /// </summary>
         /// <param name="text">The text, with names marked.</param>
         /// <param name="width">The widest a line may be, in pixels.</param>
@@ -59,17 +60,22 @@ namespace Questie
             {
                 var line = new StringBuilder();
                 var pending = new List<IconSpot>(); // spots of the line being built, with the line number filled in when it is closed
+
+                // a bullet's lines after the first start under its text and not under its dash, so the dashes read as a list
+                var hang = paragraph.StartsWith("- ", StringComparison.Ordinal) ? new string(' ', Math.Max(1, (int)Math.Ceiling(measure("- ") / spaceWidth))) : "";
+                var hasWord = false;
                 foreach (var word in Words(paragraph))
                 {
                     // a word is whatever sits between spaces, so a name keeps the comma or full stop that follows it
                     var spotsInWord = new List<(int Prefix, IconKind Kind, string Id)>();
                     var unit = Expand(word, gap, spotsInWord);
-                    var candidate = line.Length == 0 ? unit : line + " " + unit;
-                    if (line.Length > 0 && measure(candidate) > width)
+                    var candidate = hasWord ? line + " " + unit : unit;
+                    if (hasWord && measure(candidate) > width)
                     {
                         Close(lines, spots, line, pending);
-                        candidate = unit;
+                        candidate = hang + unit;
                     }
+                    hasWord = true;
                     var start = candidate.Length - unit.Length;
                     foreach (var (prefix, kind, id) in spotsInWord)
                         pending.Add(new IconSpot(0, measure(candidate.Substring(0, start + prefix)), kind, id));

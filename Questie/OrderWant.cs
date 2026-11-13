@@ -60,6 +60,12 @@ namespace Questie
         /// <summary>The qualified id of the fitting item in that biggest stack, or null when none is carried.</summary>
         public string? HeldItemId { get; set; }
 
+        /// <summary>
+        /// The one item tag the objective requires, when its rule asks for a single item, such as the id_o_192 tag the Crop Order
+        /// uses. Null when it takes a category, several alternatives, or only excludes things.
+        /// </summary>
+        public string? ItemTag { get; init; }
+
         /// <summary>How many are still needed.</summary>
         public int Left => Math.Max(0, Need - Have);
 
@@ -68,6 +74,55 @@ namespace Questie
         /// left, and takes a donation or shipment a little at a time.
         /// </summary>
         public bool CanHandOver => Kind == OrderWantKind.Deliver ? LargestStack >= Left && Left > 0 : Carried > 0;
+    }
+
+    /// <summary>Reads the tags an order accepts, so a plain tag list can say whether it names one item.</summary>
+    internal static class OrderTag
+    {
+        /// <summary>
+        /// The one tag that every possible accepted item must have, or null when the rule names no single item. A tag list is
+        /// alternatives, a clause is tags that must all match, and a clause can offer alternatives with / between them. A category, a
+        /// colour, an alternative or a negation names no single item. A required tag beside a category is still just one item tag.
+        /// </summary>
+        public static string? SingleItemTag(IEnumerable<string> tagSets)
+        {
+            string? found = null;
+            foreach (var tagSet in tagSets)
+            {
+                string? setTag = null;
+                foreach (var clause in (tagSet ?? "").Split(','))
+                {
+                    var tags = clause.Split('/').Select(tag => tag.Trim()).Where(tag => tag.Length > 0).ToList();
+                    // one of several tags in a clause is an alternative, so the item is not fixed
+                    if (tags.Count != 1)
+                        return null;
+
+                    var tag = tags[0];
+                    // an excluded tag says what the item is not, not what it is
+                    if (tag.StartsWith('!'))
+                        return null;
+                    if (!NamesOneItem(tag))
+                        continue;
+                    if (setTag is not null && !setTag.Equals(tag, StringComparison.OrdinalIgnoreCase))
+                        return null;
+                    setTag = tag;
+                }
+
+                // a list with no item tag can take other things, so it fixes no crop
+                if (setTag is null)
+                    return null;
+                if (found is not null && !found.Equals(setTag, StringComparison.OrdinalIgnoreCase))
+                    return null;
+                found = setTag;
+            }
+            return found;
+        }
+
+        private static bool NamesOneItem(string tag) =>
+            tag.StartsWith("id_", StringComparison.OrdinalIgnoreCase) ||
+            tag.StartsWith("crop_", StringComparison.OrdinalIgnoreCase) ||
+            (tag.StartsWith("item_", StringComparison.OrdinalIgnoreCase) &&
+             !tag.StartsWith("item_type_", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>The lines about special orders, for the journal and for an item's tooltip. This file has no game dependencies so the tests can compile it.</summary>
@@ -92,9 +147,29 @@ namespace Questie
                     lines.Add(line);
             }
 
-            // what is carried for each objective first, then what to do with it
+            // what is carried for each objective first, then how to grow it, then what to do with it
+            if (several)
+            {
+                // the game lists every objective on the page just below, so a line for each one with nothing carried says nothing new
+                var counted = items.Where(w => !w.ByValue && w.Left > 0).ToList();
+                var carrying = counted.Where(w => w.Carried > 0).ToList();
+                foreach (var want in carrying)
+                    AddCarry(lines, want, true, text);
+                if (counted.Count > 0 && carrying.Count == 0)
+                    lines.Add(text.Get("hint.order.carry.none"));
+            }
+            else
+            {
+                foreach (var want in items)
+                    AddCarry(lines, want, false, text);
+            }
             foreach (var want in items)
-                AddCarry(lines, want, several, text);
+            {
+                if (want.ItemTag is not { Length: > 0 } tag || source.GrowForTag(tag) is not { } grow)
+                    continue;
+                foreach (var line in HintBuilder.GrowLines(grow, source, text))
+                    Say(line);
+            }
             foreach (var want in items)
             {
                 switch (want.Kind)

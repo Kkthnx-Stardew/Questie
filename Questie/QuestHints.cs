@@ -25,15 +25,14 @@ namespace Questie
 
         private const int IconRoom = IconSize + 4;
 
-        /// <summary>The game wraps the description a little differently from how the lines here are measured, so they are kept this much narrower.</summary>
-        private const int WrapMargin = 24;
+        private const int WrapMargin = LogRule.WrapMargin;
 
-        /// <summary>The quest log's own margins around the description, which its text width is the log's width less.</summary>
-        private const int LogTextInset = 128;
+        private const int LogTextInset = LogRule.TextInset;
 
         private const int NoWidth = -1;
 
         private static readonly RasterizerState ClipToScissor = new() { ScissorTestEnable = true };
+
 
         private sealed class Cached
         {
@@ -43,10 +42,10 @@ namespace Questie
             public IReadOnlyList<IconSpot> Spots = Array.Empty<IconSpot>();
             public int LineCount;
 
-            /// <summary>How many lines the whole description, the game's text and these notes, wraps to in the quest log. Zero when there are no pictures.</summary>
+            /// <summary>How many lines the whole description, the game's text and these notes, wraps to in the quest log. Zero when the notes are not laid out for the log.</summary>
             public int TotalLines;
 
-            /// <summary>The text width the lines were laid out for, or <see cref="NoWidth"/> when they carry no pictures.</summary>
+            /// <summary>The text width the lines were laid out for, or <see cref="NoWidth"/> when they are not laid out for the quest log.</summary>
             public int Width = NoWidth;
         }
 
@@ -88,9 +87,9 @@ namespace Questie
             Portraits.Clear();
         }
 
-        /// <summary>The width the quest log wraps a description to while it is open and pictures are wanted, or <see cref="NoWidth"/>.</summary>
+        /// <summary>The width the quest log wraps a description to while it is open, or <see cref="NoWidth"/>.</summary>
         private static int LogTextWidth() =>
-            _config!().ShowNameIcons && Game1.activeClickableMenu is QuestLog log ? log.width - LogTextInset : NoWidth;
+            Game1.activeClickableMenu is QuestLog log ? log.width - LogTextInset : NoWidth;
 
         private static void GetDescriptionPostfix(Quest __instance, ref string __result)
         {
@@ -111,7 +110,7 @@ namespace Questie
                 try
                 {
                     Lay(cached, Build(__instance), width);
-                    cached.TotalLines = cached.Spots.Count == 0 ? 0 : CountLines(Game1.parseText(__result + "\n\n" + cached.Text, Game1.dialogueFont, width));
+                    cached.TotalLines = width == NoWidth || cached.Text.Length == 0 ? 0 : CountLines(Game1.parseText(__result + "\n\n" + cached.Text, Game1.dialogueFont, width));
                 }
                 catch (Exception ex)
                 {
@@ -132,7 +131,7 @@ namespace Questie
 
         private static int CountLines(string wrapped) => wrapped.Count(c => c == '\n') + 1;
 
-        /// <summary>Lays the lines out for the quest log, leaving room for pictures, or strips the pictures' markers anywhere else.</summary>
+        /// <summary>Lays the lines out for the quest log, leaving room for pictures when they are wanted, or strips the pictures' markers anywhere else.</summary>
         private static void Lay(Cached cached, string text, int width)
         {
             cached.Width = width;
@@ -143,6 +142,9 @@ namespace Questie
                 cached.LineCount = 0;
                 return;
             }
+            // the lines are wrapped here so a bullet's second line can sit under its text, and with no pictures wanted the names are plain
+            if (!_config!().ShowNameIcons)
+                text = IconText.Strip(text);
 
             var font = Game1.dialogueFont;
             var layout = IconText.Layout(text, width - WrapMargin, line => font.MeasureString(line).X, IconRoom);
@@ -151,17 +153,27 @@ namespace Questie
             cached.LineCount = layout.LineCount;
         }
 
+        /// <summary>
+        /// Every note is a bullet in the same dash and space the game uses for a quest's rewards, so each fact is a line of its own
+        /// and a wrapped one is indented under its text. The quest log holds only about ten lines, so there are no blank lines between them.
+        /// </summary>
         private static string Build(Quest quest)
         {
-            if (QuestReader.ToFact(quest) is not { } fact)
-                return "";
-            return string.Join("\n", HintBuilder.Build(fact, _config!(), _source!, _source!));
+            var text = new List<string>();
+            foreach (var fact in QuestReader.ToFacts(quest))
+            {
+                foreach (var line in HintBuilder.Build(fact, _config!(), _source!, _source!))
+                    text.Add(Bullet + line);
+            }
+            return string.Join("\n", text);
         }
+
+        private const string Bullet = "- ";
 
         /// <summary>Draws the pictures over the room the notes left in the quest log's description, under the same scrolling and clipping.</summary>
         private static void LogDrawn(QuestLog __instance, SpriteBatch b, IQuest ____shownQuest, int ___questPage)
         {
-            if (_config is null || ___questPage == -1 || ____shownQuest is not Quest quest || !Cache.TryGetValue(quest, out var cached) || cached.Spots.Count == 0)
+            if (_config is null || ___questPage == -1 || ____shownQuest is not Quest quest || !Cache.TryGetValue(quest, out var cached) || cached.Text.Length == 0 || cached.Width == NoWidth)
                 return;
 
             try
@@ -180,22 +192,27 @@ namespace Questie
 
                 // the pictures are clipped to the description's frame exactly as the text is, so a line half scrolled out keeps its picture
                 var frame = Utility.ConstrainScissorRectToScreen(new Rectangle(__instance.xPositionOnScreen + 32, top, __instance.width - 64, bottom - top));
+                var ruled = LogRule.Draw(b, __instance, top, firstNoteLine - 1, cached.Width);
                 var opened = false;
                 var savedScissor = b.GraphicsDevice.ScissorRectangle;
                 try
                 {
+                    void Open()
+                    {
+                        if (opened)
+                            return;
+                        opened = true;
+                        b.End();
+                        b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, ClipToScissor);
+                        b.GraphicsDevice.ScissorRectangle = frame;
+                    }
+
                     foreach (var spot in cached.Spots)
                     {
                         var y = top - __instance.scrollAmount + (firstNoteLine + spot.Line) * lineHeight + (lineHeight - IconSize) / 2f;
                         if (y + IconSize <= top || y >= bottom)
                             continue; // scrolled out of the description's frame
-                        if (!opened)
-                        {
-                            opened = true;
-                            b.End();
-                            b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, ClipToScissor);
-                            b.GraphicsDevice.ScissorRectangle = frame;
-                        }
+                        Open();
                         DrawIcon(b, spot, new Vector2(left + spot.X, y));
                     }
                 }
@@ -209,6 +226,10 @@ namespace Questie
                         b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
                     }
                 }
+
+                // the pictures are drawn after the log put the cursor on the screen, so the cursor goes back on top
+                if (opened || ruled)
+                    __instance.drawMouse(b);
             }
             catch (Exception ex)
             {

@@ -16,20 +16,46 @@ namespace Questie
 
         private const string SlimeKinds = "Slime|Jelly|Sludge";
 
-        /// <summary>Replaces the list with a fact for each unfinished quest of a kind the mod knows.</summary>
+        /// <summary>Replaces the list with a fact for each unfinished quest of a kind the mod knows, and each item a plain story quest names.</summary>
         public static void Read(Farmer player, List<QuestFact> into)
         {
             into.Clear();
             var log = player.questLog;
             for (var i = 0; i < log.Count; i++)
-            {
-                if (ToFact(log[i]) is { } fact)
-                    into.Add(fact);
-            }
+                AddFacts(log[i], into);
         }
 
-        /// <summary>The fact for one quest, or null when it is finished or not a kind the mod knows.</summary>
-        public static QuestFact? ToFact(Quest quest) => Build(quest) is { } fact ? fact with { Title = quest.questTitle } : null;
+        /// <summary>The first fact for one quest, or null when it is finished or not a kind the mod knows.</summary>
+        public static QuestFact? ToFact(Quest quest)
+        {
+            var facts = ToFacts(quest);
+            return facts.Count > 0 ? facts[0] : null;
+        }
+
+        /// <summary>Every fact for one quest. A plain story quest can name several items, so it can have more than one.</summary>
+        public static List<QuestFact> ToFacts(Quest quest)
+        {
+            var facts = new List<QuestFact>(1);
+            AddFacts(quest, facts);
+            return facts;
+        }
+
+        private static void AddFacts(Quest quest, List<QuestFact> into)
+        {
+            if (Build(quest) is { } fact)
+            {
+                into.Add(fact with { Title = quest.questTitle });
+                return;
+            }
+
+            // a plain story quest whose words name its items, such as an expansion's quest for several fish
+            if (quest.completed.Value || quest.GetType() != typeof(Quest))
+                return;
+            var items = QuestTextItems.Find(quest);
+            var brief = items.Count > 1;
+            foreach (var itemId in items)
+                into.Add(new QuestFact(quest.id.Value ?? "", FactKind.StoryItem, null, itemId, null, 0, 1, None) { Title = quest.questTitle, Brief = brief });
+        }
 
         private static QuestFact? Build(Quest quest)
         {
@@ -80,11 +106,21 @@ namespace Questie
                     // a story quest of the plain kind, known by its id
                     if (quest.GetType() == typeof(Quest) && StoryQuests.TryGet(id, out var story))
                     {
+                        if (story.Chain is { Count: > 0 } chain)
+                        {
+                            // the item carried says which trade of the chain comes next; with none carried, the quest is at its first step
+                            var step = chain.FirstOrDefault(s => Game1.player.Items.CountId(s.ItemId) > 0) ?? chain[0];
+                            return new QuestFact(id, FactKind.Bring, step.Npc, step.ItemId, null, 0, 1, None, null, null, step.Gives, true);
+                        }
                         if (story.ItemId is not null)
                             return new QuestFact(id, FactKind.Bring, null, story.ItemId, null, 0, story.Count, None);
-                        var level = Game1.player.deepestMineLevel;
-                        var reached = story.Area == "skull" ? Math.Max(0, level - SkullCavernStart) : Math.Min(level, SkullCavernStart);
-                        return new QuestFact(id, FactKind.Depth, null, null, null, Math.Min(reached, story.Level), story.Level, None, story.Area);
+                        if (story.Area is not null)
+                        {
+                            var level = Game1.player.deepestMineLevel;
+                            var reached = story.Area == "skull" ? Math.Max(0, level - SkullCavernStart) : Math.Min(level, SkullCavernStart);
+                            return new QuestFact(id, FactKind.Depth, null, null, null, Math.Min(reached, story.Level), story.Level, None, story.Area);
+                        }
+                        return new QuestFact(id, FactKind.Story, null, null, null, 0, 1, None);
                     }
                     return null;
             }

@@ -1,5 +1,7 @@
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.SpecialOrders;
@@ -53,7 +55,51 @@ namespace Questie
         private readonly IHintTexts _texts;
         private readonly ItemTagIndex _tags = new();
 
+        private static DonationPanel? _shown;
+        private static IMonitor? _monitor;
+        private static int _failures;
+
         public DonationPanel(IHintTexts texts) => _texts = texts;
+
+        /// <summary>
+        /// Draws the list just before the menu draws its mouse cursor, so the cursor is not hidden behind the list. The game draws the
+        /// cursor at the end of a menu's own drawing, so a prefix of that call is the only place above the menu and below the cursor.
+        /// Returns false when the game's drawing could not be hooked, so the caller can fall back to drawing after the menu.
+        /// </summary>
+        public static bool Apply(IMonitor monitor, DonationPanel panel)
+        {
+            _monitor = monitor;
+            try
+            {
+                var harmony = new Harmony("Kkthnx.Questie.DonationPanel");
+                harmony.Patch(
+                    original: AccessTools.Method(typeof(IClickableMenu), nameof(IClickableMenu.drawMouse)),
+                    prefix: new HarmonyMethod(typeof(DonationPanel), nameof(BeforeMouse)));
+                _shown = panel;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                monitor.Log($"Could not draw the list beside a donation box under the mouse cursor, so it is drawn after the box instead. ({ex.Message})", LogLevel.Warn);
+                return false;
+            }
+        }
+
+        private static void BeforeMouse(SpriteBatch b)
+        {
+            if (_shown is null)
+                return;
+            try
+            {
+                _shown.Draw(b);
+            }
+            catch (Exception ex)
+            {
+                // a menu must never break because of the list beside it
+                if (++_failures <= 3)
+                    _monitor?.Log($"Could not draw the list beside the donation box. ({ex.GetType().Name}: {ex.Message})", LogLevel.Warn);
+            }
+        }
 
         /// <summary>Forgets the items found by tag. Called when the game's item data changes.</summary>
         public void Reset() => _tags.Reset();

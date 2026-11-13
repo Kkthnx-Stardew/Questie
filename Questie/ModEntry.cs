@@ -20,6 +20,10 @@ namespace Questie
         private RecipeLookup _recipes = null!; // set in Entry
         private ShopLookup _shops = null!; // set in Entry
         private ChestLookup _chests = null!; // set in Entry
+        private GrowLookup _grow = null!; // set in Entry
+        private ForageLookup _forage = null!; // set in Entry
+        private MonsterDropLookup _drops = null!; // set in Entry
+        private MachineLookup _machines = null!; // set in Entry
         private GameHintSource _source = null!; // set in Entry
         private DonationPanel _donations = null!; // set in Entry
 
@@ -31,11 +35,16 @@ namespace Questie
             _recipes = new RecipeLookup((item, have, need) => helper.Translation.Get("hint.ingredient", new { item, have, need }));
             _shops = new ShopLookup();
             _chests = new ChestLookup();
-            _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops, _chests);
+            _grow = new GrowLookup();
+            _forage = new ForageLookup();
+            _drops = new MonsterDropLookup();
+            _machines = new MachineLookup();
+            _source = new GameHintSource(helper.Translation, _fish, _recipes, _shops, _chests, _grow, _forage, _drops, _machines);
             QuestHints.Apply(Monitor, () => _config, _source);
             _donations = new DonationPanel(_source);
             ItemBadges.Apply(Monitor, () => _config, () => _tracker.Value, _source);
             OrderJournal.Apply(Monitor, () => _config, () => _tracker.Value, _source);
+            OrderIcons.Apply(Monitor, () => _config);
 
             helper.Events.GameLoop.GameLaunched += (_, _) => ConfigMenu.Setup(this, helper, () => _config, OnConfigSaved);
             helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
@@ -45,7 +54,9 @@ namespace Questie
             helper.Events.Player.Warped += (_, e) => { if (e.IsLocalPlayer) Refresh(); };
             helper.Events.Player.InventoryChanged += (_, e) => { if (e.IsLocalPlayer) Refresh(); };
             helper.Events.Display.RenderedWorld += OnRenderedWorld;
-            helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
+            // the list is drawn beneath the menu's mouse cursor; drawing after the menu would hide the cursor behind it
+            if (!DonationPanel.Apply(Monitor, _donations))
+                helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
             helper.Events.Display.MenuChanged += (_, _) => _donations.Release();
             helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             helper.Events.Content.LocaleChanged += (_, _) => ForgetLookups();
@@ -87,8 +98,8 @@ namespace Questie
         }
 
         /// <summary>
-        /// Builds the shop and recipe indexes now, while the save is still loading, so the first time the quest log is opened does not
-        /// stop for the few frames it takes. They are built again, when asked for, if the game's data changes later.
+        /// Builds the shop, recipe, crop, forage and monster drop indexes now, while the save is still loading, so the first time the quest
+        /// log is opened does not stop for the few frames it takes. They are built again, when asked for, if the game's data changes later.
         /// </summary>
         private void WarmUp()
         {
@@ -96,6 +107,11 @@ namespace Questie
             {
                 _shops.Find("(O)0");
                 _recipes.Find("(O)0");
+                QuestTextItems.WarmUp();
+                _grow.Find("(O)0");
+                _forage.Find("(O)0");
+                _drops.Find("(O)0");
+                _machines.Find("(O)0");
             }
             catch (Exception ex)
             {
@@ -139,7 +155,8 @@ namespace Questie
             foreach (var name in e.NamesWithoutLocale)
             {
                 if (name.IsEquivalentTo("Data/Fish") || name.IsEquivalentTo("Data/Locations") || name.IsEquivalentTo("Data/CraftingRecipes")
-                    || name.IsEquivalentTo("Data/CookingRecipes") || name.IsEquivalentTo("Data/Objects") || name.IsEquivalentTo("Data/Shops"))
+                    || name.IsEquivalentTo("Data/CookingRecipes") || name.IsEquivalentTo("Data/Objects") || name.IsEquivalentTo("Data/Shops")
+                    || name.IsEquivalentTo("Data/Crops") || name.IsEquivalentTo("Data/Monsters"))
                 {
                     ForgetLookups();
                     return;
@@ -188,7 +205,13 @@ namespace Questie
             _recipes.Reset();
             _shops.Reset();
             _chests.Reset();
+            _grow.Reset();
+            _forage.Reset();
+            _drops.Reset();
+            _machines.Reset();
             _donations.Reset();
+            QuestTextItems.Reset();
+            OrderIcons.Reset();
             QuestHints.Forget();
             OrderJournal.Forget();
         }

@@ -51,13 +51,13 @@ namespace Questie
             switch (objective)
             {
                 case DeliverObjective deliver:
-                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Deliver, Npc = Clean(deliver.targetName.Value), Have = have, Need = need, Accepts = Matcher(deliver.acceptableContextTagSets) };
+                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Deliver, Npc = Clean(deliver.targetName.Value), Have = have, Need = need, ItemTag = OrderTag.SingleItemTag(deliver.acceptableContextTagSets), Accepts = Matcher(deliver.acceptableContextTagSets) };
 
                 case DonateObjective donate:
-                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Donate, Place = Clean(donate.GetDropboxLocationName()), Have = have, Need = need, Accepts = donate.IsValidItem };
+                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Donate, Place = Clean(donate.GetDropboxLocationName()), Have = have, Need = need, ItemTag = OrderTag.SingleItemTag(donate.acceptableContextTagSets), Accepts = donate.IsValidItem };
 
                 case ShipObjective ship:
-                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Ship, Have = have, Need = need, ByValue = ship.useShipmentValue.Value, Accepts = Matcher(ship.acceptableContextTagSets) };
+                    return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Ship, Have = have, Need = need, ByValue = ship.useShipmentValue.Value, ItemTag = OrderTag.SingleItemTag(ship.acceptableContextTagSets), Accepts = Matcher(ship.acceptableContextTagSets) };
 
                 case SlayObjective slay:
                     return new GameOrderWant { OrderKey = key, Order = name, Text = text, Kind = OrderWantKind.Slay, Monsters = slay.targetNames.Where(n => !string.IsNullOrWhiteSpace(n)).ToList(), Have = have, Need = need };

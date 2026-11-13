@@ -24,6 +24,10 @@
     <Compile Include="..\Questie\MarkerPlan.cs" Link="MarkerPlan.cs" />
     <Compile Include="..\Questie\FishTimes.cs" Link="FishTimes.cs" />
     <Compile Include="..\Questie\HintBuilder.cs" Link="HintBuilder.cs" />
+    <Compile Include="..\Questie\ForageConditions.cs" Link="ForageConditions.cs" />
+    <Compile Include="..\Questie\ForageEntryItems.cs" Link="ForageEntryItems.cs" />
+    <Compile Include="..\Questie\MonsterPlaces.cs" Link="MonsterPlaces.cs" />
+    <Compile Include="..\Questie\MonsterExtraDrops.cs" Link="MonsterExtraDrops.cs" />
     <Compile Include="..\Questie\SocializeRepair.cs" Link="SocializeRepair.cs" />
     <Compile Include="..\Questie\DonationLines.cs" Link="DonationLines.cs" />
     <Compile Include="..\Questie\ItemNeeds.cs" Link="ItemNeeds.cs" />
@@ -31,6 +35,8 @@
     <Compile Include="..\Questie\IconText.cs" Link="IconText.cs" />
     <Compile Include="..\Questie\StoryQuests.cs" Link="StoryQuests.cs" />
     <Compile Include="..\Questie\NameText.cs" Link="NameText.cs" />
+    <Compile Include="..\Questie\BasePlaces.cs" Link="BasePlaces.cs" />
+    <Compile Include="..\Questie\TextMatch.cs" Link="TextMatch.cs" />
     <Compile Include="..\Questie\OrderWant.cs" Link="OrderWant.cs" />
   </ItemGroup>
 

@@ -30,6 +30,12 @@ namespace Questie
         /// <summary>Bring an item to a place, as a story quest of the plain kind asks.</summary>
         Bring,
 
+        /// <summary>An item a plain story quest names only in its objective text, such as the fish of an expansion's elixir quest.</summary>
+        StoryItem,
+
+        /// <summary>A plain story quest helped by a line of words alone, such as where to use the Skull Key.</summary>
+        Story,
+
         /// <summary>Harvest or make an item, which counts as soon as it is in the backpack.</summary>
         Harvest,
 
@@ -54,6 +60,8 @@ namespace Questie
     /// <param name="Remaining">For Socialize, the villagers still to greet. Empty otherwise.</param>
     /// <param name="Place">For a lost item that is not found yet, the internal name of the place it lies in, or null.</param>
     /// <param name="Title">The quest's title as the quest log shows it, or null.</param>
+    /// <param name="Gives">For a trade, the qualified item the person gives back, or null when the trade finishes the quest.</param>
+    /// <param name="Trade">Whether the item is handed to a person in exchange for another, as The Pirate's Wife asks.</param>
     public sealed record QuestFact(
         string Id,
         FactKind Kind,
@@ -64,8 +72,16 @@ namespace Questie
         int Need,
         IReadOnlyList<string> Remaining,
         string? Place = null,
-        string? Title = null)
+        string? Title = null,
+        string? Gives = null,
+        bool Trade = false)
     {
+        /// <summary>
+        /// Whether the quest names several items at once, so each gets one short line in the journal instead of the full help for its
+        /// kind, which would make a long list such as five fish hard to read.
+        /// </summary>
+        public bool Brief { get; init; }
+
         /// <summary>Whether the counted part of the quest is finished, so only the hand-in is left.</summary>
         public bool CountDone => Need > 0 && Have >= Need;
     }

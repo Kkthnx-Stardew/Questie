@@ -33,8 +33,10 @@ namespace Questie
             if (!_byItem.TryGetValue(qualifiedItemId, out var stock))
                 return None;
 
-            // a shop that always stocks the item is named before one that only does at times
-            var offers = stock.OrderBy(s => s.Sometimes).Select(s => new ShopOffer(s.Seller, PriceOf(s, qualifiedItemId), s.Sometimes)).ToList();
+            // a shop that always stocks the item is named before one that only does at times, and the cheapest comes first
+            // so a shop that asks far more than the rest is the one left off when only a few are named
+            var offers = stock.Select(s => new ShopOffer(s.Seller, PriceOf(s, qualifiedItemId), s.Sometimes))
+                .OrderBy(o => o.Sometimes).ThenBy(o => o.Price > 0 ? o.Price : int.MaxValue).ToList();
             _offers[qualifiedItemId] = offers;
             return offers;
         }
@@ -76,6 +78,8 @@ namespace Questie
                     continue;
 
                 var seller = Seller(shopId, shop);
+                if (seller is null)
+                    continue;
                 foreach (var item in shop.Items)
                 {
                     if (item.TradeItemId is not null || string.IsNullOrWhiteSpace(item.ItemId))
@@ -93,8 +97,11 @@ namespace Questie
             return index;
         }
 
-        /// <summary>The person who runs the shop, or the shop's id when it has no named owner.</summary>
-        private static string Seller(string shopId, ShopData shop)
+        /// <summary>
+        /// The person who runs the shop, or the shop's id made readable when it has no named owner. Another mod's shop with no owner has
+        /// an id such as "Mod.Author_VendorTwo", which is not a name a player knows, so it is left out and null is returned.
+        /// </summary>
+        private static string? Seller(string shopId, ShopData shop)
         {
             if (shop.Owners is not null)
             {
@@ -105,7 +112,7 @@ namespace Questie
                         return NPC.GetDisplayName(name);
                 }
             }
-            return NameText.Humanize(shopId);
+            return shopId.IndexOfAny(new[] { '_', '.' }) >= 0 ? null : NameText.Humanize(shopId);
         }
     }
 }

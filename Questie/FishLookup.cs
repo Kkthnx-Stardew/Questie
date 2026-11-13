@@ -8,7 +8,7 @@ namespace Questie
     internal sealed class FishLookup
     {
         /// <summary>The most places named for one fish before the rest are counted.</summary>
-        private const int MaxPlaces = 6;
+        private const int MaxPlaces = 3;
 
         private readonly Dictionary<string, FishInfo?> _cache = new(StringComparer.Ordinal);
         private readonly Func<string, string> _more;
@@ -127,19 +127,23 @@ namespace Questie
 
         private List<string> Places(List<(string Name, LocationData Data, Rule Rule)> rules, IReadOnlyList<int>? fishSeasons)
         {
-            var places = new List<string>();
+            var found = new List<(string Text, bool Base)>();
             foreach (var (name, location, rule) in rules)
             {
                 var display = DisplayName(name, location);
                 // a place's seasons are only worth saying when they differ from the fish's own, which is said once on its own line
                 var differs = !rule.AllYear && rule.Seasons.Count is > 0 and < 4 && !rule.Seasons.SequenceEqual(fishSeasons ?? WholeYear);
-                places.Add(differs
+                found.Add((differs
                     ? $"{display} ({string.Join(", ", rule.Seasons.Select(s => Utility.getSeasonNameFromNumber(s).ToLowerInvariant()))})"
-                    : display);
+                    : display, BasePlaces.Contains(name)));
             }
 
-            places = places.Distinct(StringComparer.Ordinal).ToList();
-            places.Sort(StringComparer.CurrentCultureIgnoreCase);
+            // the list is cut to a few places, so the base game's come first and the rest follow in alphabetical order
+            var places = found.DistinctBy(p => p.Text, StringComparer.Ordinal)
+                .OrderBy(p => p.Base ? 0 : 1)
+                .ThenBy(p => p.Text, StringComparer.CurrentCultureIgnoreCase)
+                .Select(p => p.Text)
+                .ToList();
             if (places.Count > MaxPlaces)
             {
                 var rest = places.Count - MaxPlaces;

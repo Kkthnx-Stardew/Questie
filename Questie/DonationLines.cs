@@ -27,7 +27,7 @@ namespace Questie
             return first;
         }
 
-        /// <summary>"12 of 40, 28 to go", or "Done". A need of one is a yes or no, so it only says Done.</summary>
+        /// <summary>"12 of 40, 28 to go", "0 of 40" when nothing is in yet, or "Done". A need of one is a yes or no, so it only says Done.</summary>
         public static string Progress(DonationNeed need, IHintTexts texts)
         {
             if (!need.Counted)
@@ -36,6 +36,9 @@ namespace Questie
                 return texts.Get("donate.done");
             if (need.Need <= 1)
                 return "";
+            // with nothing given yet the number to go is the number needed, so it is said once
+            if (need.Have <= 0)
+                return texts.Get("donate.progress.none", ("need", need.Need.ToString()));
             return texts.Get("donate.progress", ("have", need.Have.ToString()), ("need", need.Need.ToString()), ("left", (need.Need - need.Have).ToString()));
         }
     }

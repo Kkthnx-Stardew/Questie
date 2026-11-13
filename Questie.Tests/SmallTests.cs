@@ -96,7 +96,7 @@ public class ShippedFilesTests
             "hint.carry", "hint.return", "hint.where", "hint.fish.places",
             "hint.fish.time", "hint.fish.sunny", "hint.fish.rainy", "hint.craft.known", "hint.craft.unknown", "hint.cook.known",
             "hint.cook.unknown", "hint.left", "hint.more", "hint.here", "hint.lost", "hint.fish.trap", "hint.fish.everywhere",
-            "hint.unlock.friendship", "hint.unlock.skill", "hint.unlock.other", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "hint.and", "hint.order.carry", "hint.order.carry.each", "hint.order.onestack", "hint.order.deliver", "hint.order.donate", "hint.order.ship", "note.order.deliver", "note.order.donate", "note.order.ship", "hint.price", "hint.ingredient", "hint.time.range", "hint.bring.2", "hint.bring.3", "hint.bring.10", "hint.bring.21", "hint.bring.22", "hint.bring.29", "hint.bring.127", "hint.depth.mines", "hint.depth.skull", "hint.build.by", "hint.build", "hint.build.gold", "note.bring", "hint.fish.seasons", "hint.fish.noseason", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
+            "hint.unlock.friendship", "hint.unlock.skill", "hint.return.where", "hint.return.here", "hint.fish.time.sunny", "hint.fish.time.rainy", "hint.go", "hint.fish.now", "hint.fish.notime", "hint.fish.noweather", "hint.sold", "hint.sold.sometimes", "hint.carry.chests", "hint.and", "hint.or", "hint.order.carry", "hint.order.carry.each", "hint.order.carry.none", "hint.order.onestack", "hint.order.deliver", "hint.order.donate", "hint.order.ship", "note.order.deliver", "note.order.donate", "note.order.ship",             "hint.price", "hint.ingredient", "hint.time.range", "hint.bring.2", "hint.bring.3", "hint.bring.4", "hint.bring.10", "hint.bring.21", "hint.bring.22", "hint.bring.27", "hint.bring.29", "hint.bring.127", "hint.bring.134", "hint.story.5", "hint.story.13", "hint.story.19", "hint.story.24", "hint.story.25", "hint.story.26", "hint.story.28", "hint.story.31", "hint.trade", "hint.trade.finish", "note.trade", "note.trade.finish", "hint.story.carry", "hint.story.fish", "hint.story.fish.trap", "hint.story.fish.everywhere", "note.story", "hint.depth.mines", "hint.depth.skull", "hint.build.by", "hint.build", "hint.build.gold", "hint.grow", "hint.grow.any", "hint.grow.ready", "hint.grow.ready.one", "hint.grow.regrow", "hint.grow.regrow.one", "hint.forage", "hint.forage.any", "hint.forage.place", "hint.forage.place.any", "hint.drop", "hint.slay.where", "hint.made", "hint.drop.monster", "hint.drop.monster.places", "note.bring", "hint.fish.seasons", "hint.fish.noseason", "gmcm.nameicons.name", "gmcm.nameicons.tip", "message.expiring", "note.deliver", "note.progress", "note.lost", "gmcm.itemmarks.name", "gmcm.itemmarks.tip", "donate.title", "donate.progress", "donate.progress.none", "donate.done", "donate.more", "gmcm.donations.name", "gmcm.donations.tip",
         };
         foreach (var key in asked)
             Assert.Contains(key, keys);
@@ -134,6 +134,7 @@ public class DonationLinesTests
     public void SaysDoneWhenEnoughIsIn()
     {
         Assert.Equal("donate.done:", DonationLines.Progress(new DonationNeed("Amethyst", 40, 40), new Texts()));
+        Assert.Equal("donate.progress.none:need=40", DonationLines.Progress(new DonationNeed("Amethyst", 0, 40), new Texts()));
     }
 
     [Fact]
@@ -194,8 +195,26 @@ public class NameTextTests
     [InlineData("Custom_Claire_WarpRoom", "Custom Claire Warp Room")]
     [InlineData("Beach", "Beach")]
     [InlineData("", "")]
+    [InlineData("Author.CentralStation_GiftShop", "Central Station Gift Shop")]
+    [InlineData("Pathoschild.CentralStation_GiftShop", "Central Station Gift Shop")]
+    [InlineData("Trailing.", "Trailing.")]
     public void AnInternalNameBecomesWords(string name, string expected)
     {
         Assert.Equal(expected, NameText.Humanize(name));
+    }
+}
+
+
+public class BasePlacesTests
+{
+    [Theory]
+    [InlineData("Beach", true)]
+    [InlineData("IslandNorth", true)]
+    [InlineData("Custom_ExpansionLake", false)]
+    [InlineData("beach", false)]
+    [InlineData("", false)]
+    public void OnlyTheBaseGamesOwnPlacesAreBasePlaces(string name, bool expected)
+    {
+        Assert.Equal(expected, BasePlaces.Contains(name));
     }
 }

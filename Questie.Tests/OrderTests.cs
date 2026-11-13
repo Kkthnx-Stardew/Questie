@@ -21,6 +21,16 @@ public class OrderTests
         public string? WhereIs(string npc) => Place;
         public string? PlaceName(string internalName) => BoxPlace;
         public FishInfo? Fish(string qualifiedItemId) => null;
+        public GrowInfo? Grow(string qualifiedItemId) => null;
+        public GrowInfo? GrowForTag(string tag)
+        {
+            GrowTag = tag;
+            return GrowTagData;
+        }
+        public GrowInfo? GrowTagData;
+        public string? GrowTag;
+        public ForageInfo? Forage(string qualifiedItemId) => null;
+        public DropInfo? Drop(string qualifiedItemId) => null;
         public int ClockNow => 1200;
         public bool RainingNow => false;
         public BuildingInfo? Building(string buildingType) => null;
@@ -74,9 +84,21 @@ public class OrderTests
         var lines = OrderNotes.Journal(wants, new ModConfig(), new Source { Place = "Town" }, new Texts());
         Assert.Equal(new[]
         {
-            "hint.order.carry.each(what=Deliver a Ruby to Emily,count=1)", "hint.order.carry.each(what=Deliver a Topaz to Emily,count=0)",
+            "hint.order.carry.each(what=Deliver a Ruby to Emily,count=1)",
             "hint.order.deliver(npc=EMILY)", "hint.where(npc=EMILY,place=Town)",
         }, lines);
+    }
+
+    [Fact]
+    public void SeveralObjectivesWithNothingCarriedSaySoOnceInsteadOfOnceEach()
+    {
+        var wants = new[]
+        {
+            new OrderWant { Kind = OrderWantKind.Donate, Text = "Drop off 20 void souls.", Have = 0, Need = 20 },
+            new OrderWant { Kind = OrderWantKind.Donate, Text = "Drop off 25 red slime eggs.", Have = 0, Need = 25 },
+        };
+        var lines = OrderNotes.Journal(wants, new ModConfig(), new Source(), new Texts());
+        Assert.Equal(new[] { "hint.order.carry.none" }, lines);
     }
 
     [Fact]
@@ -113,6 +135,51 @@ public class OrderTests
     public void AKillObjectiveAddsNoJournalLines()
     {
         Assert.Empty(Journal(new OrderWant { Kind = OrderWantKind.Slay, Monsters = new[] { "Bat" }, Need = 10 }));
+    }
+
+    [Theory]
+    [InlineData("id_o_192", "id_o_192")]
+    [InlineData(" item_potato ", "item_potato")]
+    [InlineData("crop_potato", "crop_potato")]
+    [InlineData("id_o_192,category_vegetable", "id_o_192")]
+    [InlineData("id_o_192,quality_gold", "id_o_192")]
+    [InlineData("category_vegetable", null)]
+    [InlineData("item_type_vegetable", null)]
+    [InlineData("id_o_192/id_o_193", null)]
+    [InlineData("id_o_192,id_o_193", null)]
+    [InlineData("!id_o_192", null)]
+    [InlineData("", null)]
+    public void OneItemTagMustNameOneItem(string set, string? expected)
+    {
+        Assert.Equal(expected, OrderTag.SingleItemTag(new[] { set }));
+    }
+
+    [Fact]
+    public void SeveralTagListsMustAllNameTheSameItem()
+    {
+        Assert.Equal("id_o_192", OrderTag.SingleItemTag(new[] { "id_o_192", "id_o_192" }));
+        Assert.Null(OrderTag.SingleItemTag(new[] { "id_o_192", "id_o_193" }));
+        Assert.Null(OrderTag.SingleItemTag(new[] { "id_o_192", "category_vegetable" }));
+        Assert.Null(OrderTag.SingleItemTag(Array.Empty<string>()));
+    }
+
+    [Fact]
+    public void ACropOrderSaysWhatToPlant()
+    {
+        var source = new Source { GrowTagData = new GrowInfo("Potato Seeds", new[] { 0 }, 6, -1) };
+        var want = new OrderWant { Kind = OrderWantKind.Ship, Have = 0, Need = 100, ItemTag = "id_o_192" };
+        Assert.Equal(new[]
+        {
+            "hint.order.carry(count=0,left=100)", "hint.grow(seed=Potato Seeds,seasons=spring) hint.grow.ready(days=6)", "hint.order.ship",
+        }, Journal(want, source));
+        Assert.Equal("id_o_192", source.GrowTag);
+    }
+
+    [Fact]
+    public void AnItemThatIsNotACropGetsNoGrowLine()
+    {
+        var want = new OrderWant { Kind = OrderWantKind.Ship, Have = 0, Need = 5, ItemTag = "item_ruby" };
+        Assert.DoesNotContain(Journal(want, new Source()), line => line.StartsWith("hint.grow"));
     }
 
     [Fact]
