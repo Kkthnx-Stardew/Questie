@@ -2,7 +2,7 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Newest first.
 
-## 0.9.0-beta.8 (2026-11-12)
+## 0.9.0-beta.8 (2026-11-13)
 
 - A delivery or gathering quest for a fish now gets the fishing help a fishing quest gets, such as where an albacore bites for Fish Stew, the crab pot water for Wanted: Lobster, and the places of a fish an expansion adds. Before, only a fishing quest said where a fish bites.
 - A kill quest now says where the monster lives, such as "Found in The Mines and Skull Cavern.", until the kills are done.
